@@ -1,0 +1,164 @@
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+
+<head th:include="layout :: head(title=~{::title},links=~{})">
+    <title>Patient Advocate View Patient Information</title>
+    <link rel="stylesheet"
+          href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.css">
+    <script
+            src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.js"></script>
+
+    <style>
+        .flex-container {
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+
+<body th:include="layout :: body" th:with="content=~{::content}">
+<div th:fragment="content">
+    <script th:inline="javascript">
+        /* Otherwise Thymeleaf tries to parse Javascript as XML and breaks itself sometimes.  Sigh */
+        /*<![CDATA[*/
+        let app = angular.module("viewInfoApp", []);
+        app.controller('viewInfoCtrl', function ($scope, $http) {
+            //Series of  events  that  need to occur
+			//Advocate must get a list of all know associations
+			//Fills a field in the page of all known patients advocate is associated to
+				//If no patients then the field is left empty
+			//Once patient is selected to the right buttons will appear to links with the information for viewing
+				//If no information available for viewing leave empty
+		
+			//All of the Patients that go with a advocate
+            $scope.patientsList = [];
+            //The associations so that we can retrieve the permissions
+            $scope.associations = [];
+            
+            //Permission fields of the desired patient
+            $scope.billing = false;
+            //Visit fields of the desired patient
+            $scope.visit = false;
+            //Prescription field of the desired patient
+            $scope.prescription = false;
+            
+            $scope.patientError = "";
+            $scope.permissionsError = "";
+            $scope.noPatients = "";
+            $scope.noPermissions = "";
+            
+            
+            $scope.getPatients = function() {
+            	$http.get("/iTrust2/api/v1/patients/advocate").then(
+                	function (response) {
+                    	$scope.patientsList = response.data;
+                    	if ($scope.patientsList.length == 0) {
+                    		$scope.noPatients = "You have no Patients to view";
+                    	}
+                	}, function (rejection) {
+                   	 $scope.patientError = "Could not load Patients for the advocate";
+                });
+            }
+            
+            $scope.getAssociations = function() {
+            	$http.get("/iTrust2/api/v1/patientAdvocateAssociations/currentAdvocate").then(
+                	function (response) {
+                    	$scope.associations = response.data;
+                    	
+                	}, function (rejection) {
+                   	 $scope.permissionsError = "Could not load permissions for advocate";
+                });
+            }
+            
+            $scope.setViewingInfo = function(patient) {
+            	$scope.noPermissions = "";
+            	for (var i = 0; i < $scope.associations.length; i++) {
+            		if ($scope.associations[i].patient == patient.username) { 
+            			localStorage.clear();
+            			$scope.billing = $scope.associations[i].billing;
+            			$scope.visit = $scope.associations[i].visit;
+            			$scope.prescription = $scope.associations[i].prescription;
+            			localStorage.setItem('username', patient.username);
+            			break;
+            		}
+            	}
+            	
+            	if (!$scope.billing && !$scope.prescription && !$scope.visit) {
+            		$scope.noPermissions = "You do not have permission to view any information";
+            		
+            	}
+            }
+            
+            
+            $scope.getPatients();
+            $scope.getAssociations();
+        });
+        /*]]>*/
+    </script>
+    
+	<div ng-app="viewInfoApp" ng-controller="viewInfoCtrl">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="panel panel-primary">
+                        <div class="panel-heading">
+                            <h3>Patient Advocate View Patient Information</h3>
+                    	</div>
+                    	<div class="row">
+                    		<div class="panel-body">
+                    			<div class="flex-container">
+                    				<div class="col-md-4">
+										<div class="panel panel-info">
+											<div class="panel-heading">
+												<h4>Patients</h4>
+											</div>
+												<div class="panel-body">
+													<p style="color: red">{{patientError}}</p>
+													<p style="color: red">{{noPatients}}</p>
+													<div ng-repeat="patient in patientsList">
+														<button type="button" class="btn btn-primary btn-md"
+                                	                		ng-click="setViewingInfo(patient)">
+                                	            		{{patient.username}}</button>
+													</div>
+												</div>
+										</div>
+									</div>
+						
+									<div class="col-md-4">
+										<div class="panel panel-info">
+											<div class="panel-heading">
+												<h4>View Information</h4>
+											</div>
+												<div class="panel-body">
+													<p style="color: red">{{permissionsError}}</p>
+													<p style="color: red">{{noPermissions}}</p>
+													<div>
+														<a href="/iTrust2/patientadvocate/viewInfo/billing">
+															<input id = "billingbtn" type="button" ng-show="billing"
+															value="Billing Information">
+														</a>
+														<a href="/iTrust2/patientadvocate/viewInfo/patientOfficeVisit">
+															<input id = "visitbtn" type="button" ng-show="visit"
+															value="Office Visit Information">
+														</a>
+														<a href="/iTrust2/patientadvocate/viewInfo/prescriptions">
+															<input id = "prescriptionbtn" type="button" ng-show="prescription"
+															value="Prescription Information">
+														</a>
+													</div>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+
+</html>

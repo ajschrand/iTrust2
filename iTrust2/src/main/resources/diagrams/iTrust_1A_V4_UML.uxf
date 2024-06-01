@@ -1,0 +1,460 @@
+<diagram program="umletino" version="15.0.0"><zoom_level>9</zoom_level><element><id>UMLPackage</id><coordinates><x>360</x><y>153</y><w>189</w><h>279</h></coordinates><panel_attributes>edu.ncsu.csc.iTrust2.models.enum
+bg=#FA8072
+group=group-0</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>360</x><y>171</y><w>189</w><h>261</h></coordinates><panel_attributes>&lt;&lt;Enum&gt;&gt;
+Role
+--
++ROLE_Patient
++ROLE_HCP
++ROLE_ADMIN
++ROLE_ER
++ROLE_OD
++ROLE_OPH
++ROLE_VIROLOGIST
++ROLE_VACCINATOR
+*+ROLE_PATIENT_ADVOCATE*
+-int code
+-String landingPage
+--
+-Role(int code, String landingPage)
++getCode(): int
++getLanding(): String
+group=group-0</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>756</x><y>144</y><w>225</w><h>315</h></coordinates><panel_attributes>&lt;&lt; Java Class&gt;&gt;
+User
+--
+-String: username
+-String: password
+-Integer: enabled
+-Set&lt;Role&gt;: roles
+--
+#User()
+#User(String username, String password, 
+             Role role, Integer enabled)
+#User(UserForm form)
++getUsername(): String
++setUsername(String username): void
++getPassword(): String
++setPassword(String password): void
++getEnabled(): String
++setEnabled(Integer enabled): void
++getRoles(): Collection&lt;Role&gt;
+*+setRoles(Set&lt;Role&gt; roles): void*
++addRole(Role role): void
++hashcode(): int
++equals(Object obj): boolean
++getId(): String
++isDoctor(): boolean
+group=group-1</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>1161</x><y>81</y><w>90</w><h>27</h></coordinates><panel_attributes>DomainObject
+group=group-1</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>972</x><y>99</y><w>252</w><h>99</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;-
+group=group-1</panel_attributes><additional_attributes>260;10;10;90</additional_attributes></element><element><id>Relation</id><coordinates><x>855</x><y>450</y><w>27</w><h>81</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;-
+group=group-1</panel_attributes><additional_attributes>10;10;10;70</additional_attributes></element><element><id>UMLPackage</id><coordinates><x>738</x><y>0</y><w>1332</w><h>1071</h></coordinates><panel_attributes>edu.ncsu.csc.iTrust2.models
+bg=#6495ED
+group=group-1</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLPackage</id><coordinates><x>0</x><y>162</y><w>279</w><h>162</h></coordinates><panel_attributes>edu.ncsu.csc.iTrust2.controllers.routing
+bg=#F08080
+group=group-2</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>0</x><y>180</y><w>279</w><h>144</h></coordinates><panel_attributes>&lt;&lt;Java Class&gt;&gt;
+AdminController
+--
++index(Model model): String
++manageUser(Model model): String
++manageHospital(Model model): String
++drugs(Model model): String
++vaccines(Model model): String
++addCode(Model model): String
++surveys(Model model): String
+*+managePatientAdvocate(Model model): String*
+*+associatePatientAdvocate(Model model): String*
+group=group-2</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>1143</x><y>765</y><w>288</w><h>252</h></coordinates><panel_attributes>*&lt;Java Class&gt;&gt;*
+*PatientAdvocate*
+--
+*-String: middleName*
+*-String: nickname*
+*-List&lt;Long&gt;: associationIDs*
+--
+*+PatientAdvocate()*
+*+PatientAdvocate(UserForm uf)*
+*+update(PatientAdvocateForm form): PatientAdvocate*
+*+updateAll(PatientAdvocateUserForm): PatientAdvocate*
+*+getMiddleName(): String*
+*+setMiddleName(String middleName): void*
+*+getNickName(): String*
+*+setNickName(String nickname): void*
+*+toString(): String*
+*+getAssociations(): List&lt;Long&gt;*
+*+addAssociation(Long id): void*
+*+deleteAssociation(Long  id): boolean*
+group=group-1</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>1116</x><y>324</y><w>342</w><h>369</h></coordinates><panel_attributes>*&lt;&lt;Java Class&gt;&gt;*
+*PatientAdvocateAssociation*
+--
+*-Long: id*
+*-String: patient*
+*-String: patientAdvocate*
+*-boolean: billing*
+*-boolean: visit*
+*-boolean: prescription*
+--
+*+PatientAdvocateAssociation()*
+*+PatientAdvocateAssociation(String patient, *
+*                     String patientAdvocate)*
+*+PatientAdvocateAssociation(String patient, *
+*                        String patientAdvocate, boolean billing,*
+*                        boolean visit, boolean prescription)*
+*+getPatient(): String*
+*+setPatient(String patient): void*
+*+getPatientAdvocate(): String*
+*+setPatientAdvocate(String patientAdvocate): void*
+*+getBilling(): boolean*
+*+setBilling(boolean billing): void*
+*+getVisit(): boolean*
+*+setVisit(boolean visit): void*
+*+getPrescription(): boolean*
+*+setPrescription(boolean prescription): void*
+*+getId(): Long*
+*+equals(Object obj): boolean*
+group=group-1</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>1620</x><y>72</y><w>378</w><h>909</h></coordinates><panel_attributes>&lt;&lt;Java Class&gt;&gt;
+Patient
+--
+-String: firstName
+-String: preferredName
+-String: lastName
+-String: address1
+-String: address2
+-String: city
+-State: state
+-String: zip
+-String: phone
+-String: email
+-String: doses
+-VaccineType: vaccine
+-LocalDate: dateOfBirth
+-LocalDate: dateOfDeath
+-String: causeOfDeath
+-BloodType: bloodType
+-Ethnicity: ethnicity
+-Gender: gender
+-VaccinationStatus: status
+*-List&lt;Long&gt;: associationIDs*
+--
++Patient
++Patient(UserForm uf)
++update(PatientForm form): Patient
++getFirstName(): String
++setFirstName(String firstName): void
++getPreferredName(): String
++setPreferredName(String preferredName): void
++getlastName(): String
++setLastName()String lastName: void
++getAddress1(): String
++setAddress2(String address1): void
++getAddress2(): String
++setAddress2(String address2): void
++getCity(): String
++setCity(String city): void
++getState(): State
++setState(State state): void
++getZip(): String
++setZip(String zip): void
++getPhone(): String
++setPhone(String phone): void
++getEmail(): String
++setEmail(String email): void
++getDateOfBirth(): LocalDate
++setDateOfBirth(LocalDate dateOfBirth): void
++getDateOfDeath(): LocalDate
++setDateOfDeath(LocalDate dateOfDeath): void
++getCauseOfDeath(): String
++setCauseOfDeath(String causeOfDeath): void
++getBloodType(): BloodType
++setBloodType(BloodType bloodType): void
++getVaccinationStatus(): VaccinationStatus
++setVaccinationStatus(VaccinationStatus status): void
++getVaccineType(): VaccineType
++setVaccineType(VaccineType vaccine): void
++getDoses(): String
++setDoses(String doses): void
++getEthnicity(): Ethnicity
++setEthnicity(Ethnicity ethnicity): void
++getGender(): Gender
++setGender(): void
+*+addAssociation(Long id): void*
+*+deleteAssociation(Long  id): boolean*
+*+getAssociations(): List&lt;Long&gt;*
+group=group-1</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>972</x><y>270</y><w>666</w><h>36</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;-
+group=group-1</panel_attributes><additional_attributes>10;10;720;20</additional_attributes></element><element><id>Relation</id><coordinates><x>540</x><y>252</y><w>234</w><h>36</h></coordinates><panel_attributes>lt=&lt;-
+m1=1..n</panel_attributes><additional_attributes>240;10;10;10</additional_attributes></element><element><id>Relation</id><coordinates><x>1215</x><y>99</y><w>27</w><h>243</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;-
+group=group-1</panel_attributes><additional_attributes>10;10;10;250</additional_attributes></element><element><id>UMLPackage</id><coordinates><x>2196</x><y>819</y><w>1080</w><h>738</h></coordinates><panel_attributes>edu.ncsu.csc.iTrust2.controllers.api
+bg=#DA70D6
+group=group-3
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>2223</x><y>72</y><w>549</w><h>45</h></coordinates><panel_attributes>*&lt;&lt;Interface&gt;&gt;*
+*PatientAdvocateAssociationRepository extends JpaRepository&lt;PatientAdvocateAssociation, Long&gt; *
+-
+group=group-5</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLPackage</id><coordinates><x>2187</x><y>45</y><w>603</w><h>99</h></coordinates><panel_attributes>edu.ncsu.csc.iTrust2.repositories
+bg=#00BFFF
+group=group-5</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLPackage</id><coordinates><x>2187</x><y>207</y><w>603</w><h>423</h></coordinates><panel_attributes>edu.ncsu.csc.iTrust2.services
+bg=#54FF9F
+group=group-6</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLPackage</id><coordinates><x>27</x><y>558</y><w>612</w><h>1233</h></coordinates><panel_attributes>edu.ncsu.csc.iTrust2.forms
+bg=#FF7F24
+group=group-7</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>288</x><y>621</y><w>342</w><h>261</h></coordinates><panel_attributes>*&lt;&lt;Java Class&gt;&gt;*
+*PatientAdvocateAssociationForm*
+--
+*-Patient: patient*
+*-PatientAdvocate: patientAdvocate*
+*-billing: boolean*
+*-visit: boolean*
+*-prescription: boolean*
+--
+*+getPatient(): Patient*
+*+setPatient(Patient patient): void*
+*+getPatientAdvocate(): PatientAdvocate*
+*+setPatientAdvocate(PatientAdvocate patientAdvocate): void*
+*+getBilling(): boolean*
+*+setBilling(boolean billing): void*
+*+getVisit(): boolean*
+*+setVisit(boolean visit): void*
+*+getPrescription(): boolean*
+*+setPrescription(boolean prescription): void*
+group=group-7</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>756</x><y>513</y><w>234</w><h>531</h></coordinates><panel_attributes>&lt;&lt;Java Class&gt;&gt;
+Personnel
+--
+-String: firstName
+-String: lastName
+-String: address1
+-String: address2
+-String: city
+-State: state
+-String: zip
+-String: phone
+-String: email
+-String: hospitalId
+--
++Personnel()
++Personnel(UserForm uf)
++update(PersonnelForm form): Personnel
++getFirstName(): String
++setFirstName(String firstName): void
++getLastName(): String
++setLastName(String lastName): void
++getAddress1(): String
++setAddress2(String address1): void
++getAddress2(): String
++setAddress2(String address2): void
++getCity(): String
++setCity(String city): void
++getState(): State
++setState(State state): void
++getZip(): String
++setZip(String zip): void
++getPhone(): String
++setPhone(String phone): void
++getEmail(): String
++setEmail(String email): void
++getHospitalId(): String
++setHospitalId(String hospitalId): void
++toString(): String
+group=group-1</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>981</x><y>873</y><w>180</w><h>27</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;-
+group=group-1</panel_attributes><additional_attributes>10;10;180;10</additional_attributes></element><element><id>UMLClass</id><coordinates><x>378</x><y>918</y><w>234</w><h>144</h></coordinates><panel_attributes>*&lt;&lt;Java Class&gt;&gt;*
+*PatientAdvocateForm*
+--
+*-String: middleName*
+*-String: nickname*
+--
+*+getMiddleName() : String*
+*+setMiddleName(String middleName) : void*
+*+getNickname() : String*
+*+setNickname(String: nickname) : void*
+group=group-7</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>261</x><y>981</y><w>135</w><h>27</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;-
+group=group-7</panel_attributes><additional_attributes>10;10;130;10</additional_attributes></element><element><id>UMLClass</id><coordinates><x>36</x><y>594</y><w>234</w><h>468</h></coordinates><panel_attributes>&lt;&lt;Java Class&gt;&gt;
+PersonnelForm
+--
+-String: username
+-String: firstName
+-String: lastName
+-String: address1
+-String: address2
+-String: city
+-String: state
+-String: zip
+-String: phone
+-String: email
+--
++getUsername() : String
++setUsername(String: username) : void
++getFirstName() : String
++setFirstName(String: firstName) : void
++getLastName() : String
++setLastName(String: lastName) : void
++getAddress1() : String
++setAddress1(String: address1) : void
++getAddress2() : String
++setAddress2(String: address2) : void
++getCity() : String
++setCity(String: city) : void
++getState() : String
++setState(String: state) : void
++getZip() : String
++setZip(String: zip) : void
++getPhone() : String
++setPhone(String: phone) : void
++getEmail() : String
++setEmail(String: email) : void
+group=group-7</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>2214</x><y>855</y><w>468</w><h>189</h></coordinates><panel_attributes>&lt;&lt;Java Class&gt;
+APIPersonnelController
+--
+-LoggerUtil: loggerUtil
+-PersonnelService: service
+-SatisfactionSurveyStatisticsService: surveyService
+--
+*+getPersonnel(): List&lt;Personnel&gt;*
+*+getPersonnel(String id): ResponseEntity*
+*+getCurrentPersonnel(): ResponseEntity*
+*+updatePersonnel(String id, PersonnelForm personnelF): ResponseEntity*
+*+getPersonnelByRole(String role): ResponseEntity*
+*+getPersonnelByRoleWithStatistic(String role): ResponseEntity*
+group=group-3
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>2214</x><y>486</y><w>540</w><h>135</h></coordinates><panel_attributes>*&lt;&lt;Java Class&gt;&gt;*
+*PatientAdvocateAssociationService*
+--
+*-PatientAdvocateAssociationRepository: repository*
+--
+*#getRepository(): JpaRepository&lt;PatientAdvocateAssociation, Long&gt;*
+*+getPatientAssociations(String patient) : List&lt;PatientAdvocateAssociation&gt;*
+*+getPatientAdvocateAssociations(String advocate) : List &lt;PatientAdvocateAssociation&gt;*
+*+getPatientAdvocateAssociations(String patient, String advocate) : PatientAdvocateAssociation*
+*+getAssociationById(Long id): PatientAdvocateAssociation*
+group=group-6</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>2367</x><y>243</y><w>207</w><h>180</h></coordinates><panel_attributes>&lt;&lt;Abstract Class&gt;&gt;
+Service
+--
+#getRepository(): JpaRepository&lt;T, K&gt;
++save(T obj): void
++findAll(): List&lt;T&gt;
++saveAll(List&lt;T&gt; objects): void
++delete(T obj): void
++deleteAll(): void
++count(): Long
+#findBy(Example&lt;T&gt; example): List&lt;T&gt;
++existsById(K id): boolean
++findById(K id): T
+group=group-6</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>2457</x><y>414</y><w>27</w><h>90</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;-
+group=group-6</panel_attributes><additional_attributes>10;10;10;80</additional_attributes></element><element><id>UMLClass</id><coordinates><x>2241</x><y>1305</y><w>468</w><h>126</h></coordinates><panel_attributes>*&lt;&lt;Java Class&gt;*
+*APIPatientAdvocateController*
+--
+*-LoggerUtil: loggerUtil*
+*-PatientAdvocateService: service*
+*-SatisfactionSurveyStatisticsService: surveyService*
+--
+*+createPatientAdvocate(PatientAdvocateUserForm Form): ResponseEntity*
+*+editPatientAdvocateAdmin(String id, PatientAdvocateUserForm form): ResponseEntity*
+*+deletePatientAdvocate(String id): ResponseEntity*
+group=group-3
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>2223</x><y>1080</y><w>576</w><h>207</h></coordinates><panel_attributes>*&lt;&lt;Java Class&gt;&gt;*
+*APIPatientAdvocateAssociationController*
+--
+*-LoggerUtil: loggerUtil*
+*-PersonnelService: personnelService*
+*-PatientService&lt;Patient&gt;: patientService*
+*-PatientAdvocateAssociationService: service*
+*-SatisfactionSurveyStatisticsService: surveyService*
+--
+*+getPatientAdvocateAssociation(Long id): ResponseEntity*
+*+getAllPatientAdvocateAssociations(): ResponseEntity*
+*+getAllPatientAdvocateAssociationsForPatient(String patientID): ResponseEntity*
+*+getAllPatientAdvocateAssociationsForPatientAdvocate(String patientAdvocateID): ResponseEntity*
+*+updatePatientAdvocateAssociation(Long id, PatientAdvocateAssociationForm paForm): ResponseEntity*
+*+deletePatientAdvocateAssociation(Long id): ResponseEntity*
+*+createPatientAdvocateAssociation(PatientAdvocateAssociationForm paForm): ResponseEntity*
+group=group-3</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>2880</x><y>954</y><w>297</w><h>342</h></coordinates><panel_attributes>&lt;&lt;Java Class&gt;&gt;
+APIUserController
+--
+-LoggerUtil: loggerUtil
+-UserService: userService
+_-String: ROLE_ADMIN_
+_-String: ROLE_PATIENT_
+_-String: ROLE_HCP_
+_-String: ROLE_ER_
+_-String: ROLE_LABTECH_
+_-String: ROLE_VIROLOGIST_
+_-String: ROLE_OD_
+_-String: ROLE_OPH_
+_-String: ROLE_VACCINATOR_
+_-String: ROLE_BSM_
+*_-String: ROLE_PATIENT_ADVOCATE_*
+*_-List&lt;String&gt;: ALL_ROLES_*
+--
+-getUsers(): List&lt;User&gt;
+-getUser(String: id): ResponseEntity
+*-createUser(UserForm: userF): ResponseEntity*
+-updateUser(String: id, UserForm userF): ResponseEntity
+-deleteUser(String: id): ResponseEntity
+-getRole(): ResponseEntity
+-generateUsers(): ResponseEntity
+-hasRole(String: role): boolean
+--
+group=group-3</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>45</x><y>1071</y><w>189</w><h>702</h></coordinates><panel_attributes>*&lt;&lt;Java Class&gt;&gt;*
+*PatientAdvocateUserForm*
+--
+*-String: middleName*
+*-String: nickname*
+*-String: username*
+*-String: password*
+*-String: password2*
+*-Set&lt;String&gt;: roles*
+*-String: enabled*
+*-String: firstName*
+*-String: lastName*
+*-String: address1*
+*-String: address2*
+*-String: city*
+*-String: state*
+*-String: zip*
+*-String: phone*
+*-String: email*
+--
+*+PatientAdvocateUserForm()*
+*+getMiddleName() : String*
+*+setMiddleName(String: middleName) : void*
+*+getNickname() : String*
+*+setNickname(String: nickname) : void*
+*+getUsername() : String*
+*+setUsername(String: username) : void*
+*+getPassword(): String*
+*+setPassword(String: password): void*
+*+getPassword2(): String*
+*+setPassword2(String: password2): void*
+*+getRoles(): Set&lt;String&gt;)*
+*+setRoles(Set&lt;String&gt; roles): void*
+*+getEnabled(): void*
+*+setEnabled(String: enabled): void*
+*+getFirstName() : String*
+*+setFirstName(String: firstName) : void*
+*+getLastName() : String*
+*+setLastName(String: lastName) : void*
+*+getAddress1() : String*
+*+setAddress1(String: address1) : void*
+*+getAddress2() : String*
+*+setAddress2(String: address2) : void*
+*+getCity() : String*
+*+setCity(String: city) : void*
+*+getState() : String*
+*+setState(String: state) : void*
+*+getZip() : String*
+*+setZip(String: zip) : void*
+*+getPhone() : String*
+*+setPhone(String: phone) : void*
+*+getEmail() : String*
+*+setEmail(String: email) : void*
+
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>2799</x><y>1323</y><w>423</w><h>207</h></coordinates><panel_attributes>&lt;&lt;Java Class&gt;&gt;
+APIPatientController
+--
+-LoggerUtil: loggerUtil
+-UserService: userService
+-PatientService&lt;Patient&gt;: patientService
+*-PatientAdvocateAssociationService: aService*
+-VaccineTypeService: vaccService*
+--
++getPatients(): List&lt;Patients&gt;
++getPatient(): ResponseEntity
++getPatient(String id): ResponseEntity
++updatePatient(String id, PatientForm patientF): ResponseEntity
+*+deletePatient(String id): ResponseEntity*
++getPatientZip(): ResponseEntity
++updatePatientVaccination(String id, String dose, String vaccine): ResponseEntity
+group=group-3</panel_attributes><additional_attributes></additional_attributes></element></diagram>

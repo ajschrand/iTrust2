@@ -1,0 +1,208 @@
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:include="layout :: head(title=~{::title},links=~{})">
+<title>Edit My Demographics</title>
+</head>
+<body th:include="layout :: body" th:with="content=~{::content}">
+
+
+	<div th:fragment="content">
+		<script th:inline="javascript">
+	    /* Otherwise Thymeleaf tries to parse Javascript as XML and breaks itself sometimes.  Sigh */
+	    /*<![CDATA[*/
+	    var app = angular.module("editAdvocateApp", []);
+	    app.controller("editAdvocateCtrl", function($scope, $http) {
+			$scope.err = [];
+			for(var i = 0; i < 14; i++) { //Used to be 12 but added 2 more
+		   	   $scope.err[i] = "";
+			}
+			$http.get("/iTrust2/api/v1/curPersonnel").then(function(response) {
+			    $scope.advocate = response.data;
+			    $scope.advocateForm = {};
+			    Object.assign($scope.advocateForm, $scope.advocate);	
+				$scope.advocateForm.nickname = $scope.advocate.nickName;
+			}, function(rejection) {
+			    $scope.advocate = "";
+			    $scope.advocateForm = {};
+			    $scope.advocateForm.state = "AL";
+			});
+			
+			$http.get("/iTrust2/api/v1/state").then(function(response) {
+			    $scope.states = response.data;
+			});
+			
+			function checkValidForm(form) {
+			    var valid = true;
+			    if(!form.firstName || form.firstName.length > 20) {
+				    $scope.err[0] = ("first name can not be empty or longer than 20 characters");
+				    valid = false;
+			    } else {
+				    $scope.err[0] = "";
+			    }
+			    if(!form.lastName || form.lastName.length > 30) {
+				    $scope.err[1] = ("last name can not be empty or longer than 30 characters");
+				    valid = false;
+			    } else {
+				    $scope.err[1] = "";
+			    }
+			    if(!form.email || form.email.length > 30) {
+				    $scope.err[2] = ("email can not be empty or longer than 30 characters");
+				    valid = false;
+			    } else {
+				    $scope.err[2] = "";
+			    }
+			    if(!form.address1 || form.address1.length > 50) {
+				    $scope.err[3] = ("primary address can not be empty or longer than 50 characters");
+				    valid = false;
+			    } else {
+				    $scope.err[3] = "";
+			    }
+			    if(form.address2 && form.address2.length > 50) {
+				    $scope.err[4] = ("secondary address can not be longer than 50 characters");
+				    valid = false;
+			    } else {
+				    $scope.err[4] = "";
+			    }
+			    if(!form.city || form.city.length > 15) {
+				    $scope.err[5] = ("city can not be empty or longer than 15 characters");	
+				    valid = false;
+			    } else {
+				    $scope.err[5] = "";
+			    }
+			    if(!/(^\d{5}$)|(^\d{5}-\d{4}$)/.test(form.zip) ) {
+					$scope.err[6] = ("zipcode must be 5 numbers");
+					valid = false;
+				} else {
+				    $scope.err[6] = "";
+				    }
+			    if(!/(^[0-9]{3}-[0-9]{3}-[0-9]{4}$)/.test(form.phone) || !form.phone) {
+				    $scope.err[7] = ("phone can not be empty and must have correct format (e.g. 123-456-7890");
+				    valid = false;
+			    } else {
+				    $scope.err[7] = "";
+			    }
+				if(!form.middleName || form.middleName.length > 30) {
+				    $scope.err[8] = ("middle name can not be empty or longer than 30 characters");
+				    valid = false;
+			    } else {
+				    $scope.err[8] = "";
+			    }
+				if(!form.nickname || form.nickname.length > 20) {
+				    $scope.err[9] = ("nickname can not be empty or longer than 20 characters");
+				    valid = false;
+			    } else {
+				    $scope.err[9] = "";
+			    }
+			    return valid;
+			}
+			
+			$scope.submit = function() {
+			    var valid = checkValidForm($scope.advocateForm);
+			    if(!valid) {
+					$scope.message = "";
+			    } else {
+					$http.put("/iTrust2/api/v1/patientAdvocates/demographics/"
+					, $scope.advocateForm).then(
+					function(response) {
+						$scope.message = "Your demographics were updated successfully."
+					}, function(rejection) {
+						$scope.message = "Failed to update demographics."
+					});
+
+			    }
+			}
+			
+			
+	    	});
+	    /*]]>*/
+		</script>
+		<div ng-app="editAdvocateApp" ng-controller="editAdvocateCtrl">
+			<div
+				style="float: left; width: 80%; border-left: 1px solid #bbb; padding-left: 3%; height: 100%; overflow-y: auto">
+				<h2 id="header0">Edit My Demographics</h2>
+				<table>
+					<tr>
+						<td style="text-align: left; padding: 5px"><b>First Name:</b></td>
+						<td><input type="text" name="firstName" id="firstName"
+							value="{{advocateForm.firstName}}"
+							ng-model="advocateForm.firstName" /></td>
+						<td style="color: red;" ng-show="err[0]">{{err[0]}}</td>
+					</tr>
+					<tr>
+						<td style="text-align: left; padding: 5px"><b>Middle Name:</b></td>
+						<td><input type="text" name="middleName" id="middleName"
+							value="{{advocateForm.middleName}}"
+							ng-model="advocateForm.middleName" /></td>
+						<td style="color: red;" ng-show="err[8]">{{err[8]}}</td>
+					</tr>
+					<tr>
+						<td style="text-align: left; padding: 5px"><b>Last Name:</b></td>
+						<td><input type="text" name="lastName" id="lastName"
+							ng-model="advocateForm.lastName" /></td>
+						<td style="color: red;" ng-show="err[1]">{{err[1]}}</td>
+					</tr>
+					<tr>
+						<td style="text-align: left; padding: 5px"><b>nickname:</b></td>
+						<td><input type="text" name="nickname" id="nickname"
+							value="{{advocateForm.nickname}}"
+							ng-model="advocateForm.nickname" /></td>
+						<td style="color: red;" ng-show="err[9]">{{err[9]}}</td>
+					</tr>
+					<tr>
+						<td style="text-align: left; padding: 5px"><b>Email:</b></td>
+						<td><input type="text" name="email" id="email"
+							ng-model="advocateForm.email" /></td>
+						<td style="color: red;" ng-show="err[2]">{{err[2]}}</td>
+					</tr>
+					<tr>
+						<td style="text-align: left; padding: 5px"><b>Address
+								Line 1:</b></td>
+						<td><input type="text" name="address1" id="address1"
+							value="{{advocateForm.address1}}"
+							ng-model="advocateForm.address1" /></td>
+						<td style="color: red;" ng-show="err[3]">{{err[3]}}</td>
+					</tr>
+					<tr>
+						<td style="text-align: left; padding: 5px"><b>Address
+								Line 2:</b></td>
+						<td><input type="text" name="address2" id="address2"
+							ng-model="advocateForm.address2" /></td>
+						<td style="color: red;" ng-show="err[4]">{{err[4]}}</td>
+					</tr>
+					<tr>
+						<td style="text-align: left; padding: 5px"><b>City:</b></td>
+						<td><input type="text" name="city" id="city"
+							ng-model="advocateForm.city" /></td>
+						<td style="color: red;" ng-show="err[5]">{{err[5]}}</tdadvocateForm>
+					</tr>
+					<tr>
+						<td style="text-align: left; padding: 5px"><b>State:</b></td>
+						<td><select name="state" id="state"
+							ng-model="advocateForm.state">
+								<option ng-repeat="st in states">{{st.id}}</option>
+						</select></td>
+					</tr>
+					<tr>
+						<td style="text-align: left; padding: 5px"><b>Zip:</b></td>
+						<td><input type="text" name="zip" id="zip"
+							ng-model="advocateForm.zip" /></td>
+						<td style="color: red;" ng-show="err[6]">{{err[6]}}</td>
+					</tr>
+					<tr>
+						<td style="text-align: left; padding: 5px"><b>Phone:</b></td>
+						<td><input type="text" name="phone" id="phone"
+							value="advocateForm.phone" placeholder="xxx-xxx-xxxx"
+							ng-model="advocateForm.phone" /></td>
+						<td style="color: red;" ng-show="err[7]">{{err[7]}}</td>
+					</tr>
+				</table>
+
+				<br />
+				<button ng-click="submit()" class="btn" name="submit">Submit</button>
+
+				<div name="success" style="color: green;">{{message}}</div>
+			</div>
+		</div>
+
+	</div>
+</body>
+</html>

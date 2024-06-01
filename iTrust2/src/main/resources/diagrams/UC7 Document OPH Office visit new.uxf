@@ -1,0 +1,180 @@
+<diagram program="umletino" version="14.3.0"><zoom_level>10</zoom_level><help_text>Space for diagram notes</help_text><element><id>UMLPackage</id><coordinates><x>0</x><y>0</y><w>920</w><h>520</h></coordinates><panel_attributes>edu.ncsu.csc.iTrust2.controllers
+--
+bg=yellow</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>30</x><y>240</y><w>340</w><h>210</h></coordinates><panel_attributes>&lt;&lt;Java Class&gt;&gt;
+*APIOfficeVisitController*
+/edu.ncsu.csc.iTrust2.controllers.api/
+--
+-officeVisitService: OfficeVisitService;
+-userService: UserService;
+-loggerUtil: LoggerUtil;
+--
++getOfficeVisits(): List&lt;OfficeVisit&gt;
++getOfficeVisitsForHCP(): List&lt;OfficeVisit&gt;
++getMyOfficeVisits(): List&lt;OfficeVisit&gt;
++getOfficeVisit ( id: Long):ResponseEntity
++ createOfficeVisit ( visitForm: OfficeVisitForm ): ResponseEntity
++updateOfficeVisit ( id: Long ,visitForm: OfficeVisitForm )
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>590</x><y>240</y><w>270</w><h>110</h></coordinates><panel_attributes>&lt;&lt;Java Class&gt;&gt;
+*JSONResponse*
+/edu.ncsu.csc.iTrust2.controllers.api/
+--
+#status : String
+#message : String
+--
++JSONResponse(status:String, message:String)
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLPackage</id><coordinates><x>0</x><y>540</y><w>760</w><h>590</h></coordinates><panel_attributes>edu.ncsu.csc.iTrust2.models
+--
+bg=green</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLPackage</id><coordinates><x>810</x><y>550</y><w>800</w><h>560</h></coordinates><panel_attributes>edu.ncsu.csc.iTrust2.forms
+--
+bg=red</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>390</x><y>910</y><w>340</w><h>170</h></coordinates><panel_attributes>&lt;&lt;Java Class&gt;&gt;
+*ICDCode*
+--
+-id: Long
+-code: String
+-description: String
+-isOpthalmology: boolean
+
+--
+/Getters + setters for fields above/
++ICDCode(form: ICDCodeForm)
+
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>710</x><y>100</y><w>110</w><h>160</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;&lt;&lt;-
+m1=1
+m2=0..1</panel_attributes><additional_attributes>10;10;70;10;70;140</additional_attributes></element><element><id>UMLClass</id><coordinates><x>30</x><y>40</y><w>310</w><h>80</h></coordinates><panel_attributes>&lt;&lt;Java Class&gt;&gt;
+*HCPController*
+/edu.ncsu.csc.iTrust2.controllers.routing/
+--
+--
++documentOfficeVisit(model:Model): String</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>350</x><y>160</y><w>50</w><h>100</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>30;10;10;10;10;80</additional_attributes></element><element><id>UMLClass</id><coordinates><x>30</x><y>130</y><w>310</w><h>80</h></coordinates><panel_attributes>&lt;&lt;Java Class&gt;&gt;
+*PatientController*
+/edu.ncsu.csc.iTrust2.controllers.routing/
+--
+--
++viewOfficeVisits(model:Model): String</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>550</x><y>390</y><w>350</w><h>110</h></coordinates><panel_attributes>&lt;&lt;Java Class&gt;&gt;
+*APIEnumController*
+/edu.ncsu.csc.iTrust2.controllers.api/
+--
+--
++getAppointmentTypes(): List&lt;AppointmentType&gt;
++getHouseSmokingStatuses(): List&lt;HouseholdSmokingStatus&gt;
++getPatientSmokingStatuses(): List&lt;PatientSmokingStatus&gt;
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>550</x><y>200</y><w>30</w><h>210</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>10;10;10;190</additional_attributes></element><element><id>Relation</id><coordinates><x>330</x><y>440</y><w>580</w><h>220</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;&lt;-</panel_attributes><additional_attributes>10;10;10;200;560;200</additional_attributes></element><element><id>UMLClass</id><coordinates><x>1250</x><y>620</y><w>320</w><h>160</h></coordinates><panel_attributes>&lt;&lt;Java Class&gt;&gt;
+*ICDCodeForm*
+--
+-code: String
+-description: String
+-id: long
+-isOpthalmology: boolean
+--
+/Getters + setters for fields above/
++ICDCodeForm()
++ICDCodeForm(code: ICDCode)</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>1250</x><y>790</y><w>340</w><h>200</h></coordinates><panel_attributes>&lt;&lt;Java Class&gt;&gt;
+*OphthalmologyVisitForm *
+--
+-visualAcuityRight: Integer
+-visualAcuityLeft: Integer
+-axisRight: Float
+-axisLeft: Float
+-cylinderRight: Float
+-cylinderLeft: Float
+-id: Long
+--
+/Getters + setters for fields above/
++OpthmalogyVisitForm(om: OpthalmologyMetrics)</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>380</x><y>40</y><w>340</w><h>170</h></coordinates><panel_attributes>&lt;&lt;Java Class&gt;&gt;
+*APIController*
+/edu.ncsu.csc.iTrust2.controllers.api/
+--
+_#BASE_PATH : String_
+_-GSON : Gson_
+--
+_#toJson(obj:Object) : String_
+_#toJson(obj:Object, cls:Class&lt;JSONResponse&gt;) : String_
+_#responseMessage(status:String, message:String) : String_
+_#errorResponse(message:String) : String_
+_#successResponse(message:String) : String_</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>100</x><y>578</y><w>210</w><h>90</h></coordinates><panel_attributes>&lt;&lt;Abstract Class&gt;&gt;
+DomainObject
+--
+--
++getId(): Long</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>40</x><y>438</y><w>30</w><h>280</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;&lt;-</panel_attributes><additional_attributes>10;10;10;260</additional_attributes></element><element><id>Relation</id><coordinates><x>190</x><y>658</y><w>30</w><h>60</h></coordinates><panel_attributes>lt=&lt;&lt;-
+</panel_attributes><additional_attributes>10;10;10;40</additional_attributes></element><element><id>UMLPackage</id><coordinates><x>950</x><y>19</y><w>400</w><h>300</h></coordinates><panel_attributes>edu.ncsu.csc.iTrust2.services
+--
+bg=orange</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>970</x><y>59</y><w>360</w><h>240</h></coordinates><panel_attributes>&lt;&lt;Java Class&gt;&gt;
+OfficeVisitService
+--
+-repository: OfficeVisitRepository
+-userService: UserService
+-appointmentRequestService: AppointmentRequestService
+-hospitalService: HospitalService
+-bhmService: BasicHealthMetricsService
+-prescriptionService: PrescriptionService
+-diagnosisService: DiagnosisService
+--
++getRepository(): JpaRepository
++findByHcp(hcp: User)
++findByPatient(patient: User)
++findByHcpAndPatient (hcp: User, patient: User): List&lt;OfficeVisit&gt;
++build (ovf: OfficeVisitForm ): OfficeVisit
+
+
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>1191</x><y>289</y><w>30</w><h>340</h></coordinates><panel_attributes>lt=&lt;&lt;.</panel_attributes><additional_attributes>10;10;10;320</additional_attributes></element><element><id>UMLClass</id><coordinates><x>30</x><y>700</y><w>340</w><h>330</h></coordinates><panel_attributes>&lt;&lt;Java Class&gt;&gt;
+*OfficeVisit*
+--
+-patient: User
+-hcp : User
+-basicHealthMetrics: BasicHealthMetrics
+-opthalmologyMetrics: OpthalmologyMetrics
+-date: ZonedDateTime
+-id: long
+-type: String
+-hospital: Hospital
+-diagnoses: List&lt;Diagnosis&gt;
+-notes: String
+-appointment: AppointmentRequest
+-prescriptions: List&lt;Prescription&gt;
+--
+/Getters + setters for fields above/
++OfficeVisit()
++validateDiagnoses()
++validate12AndOver()
++validateUnder12()
++validateUnder3()
+
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>300</x><y>650</y><w>130</w><h>70</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>10;10;110;10;110;50</additional_attributes></element><element><id>UMLClass</id><coordinates><x>390</x><y>700</y><w>340</w><h>180</h></coordinates><panel_attributes>&lt;&lt;Java Class&gt;&gt;
+*OpthalmologyMetrics*
+--
+-visualAcuityRight: Integer
+-visualAcuityLeft: Integer
+-axisRight: Float
+-axisLeft: Float
+-cylinderRight: Float
+-cylinderLeft: Float
+--
+/Getters + setters for fields above/
++OpthalmologyMetrics()
+
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>720</x><y>590</y><w>660</w><h>420</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;&lt;-</panel_attributes><additional_attributes>10;400;70;400;70;10;640;10;640;30</additional_attributes></element><element><id>UMLClass</id><coordinates><x>890</x><y>610</y><w>340</w><h>390</h></coordinates><panel_attributes>&lt;&lt;Java Class&gt;&gt;
+*OfficeVisitForm*
+--
+-patient: String
+-hcp : String
+-date: String
+-id: String
+-type: String
+-hospital: String
+-notes: String
+-preScheduled: String
+-height: Float
+-weight: Float
+-headCircumference: Float
+-systolic: Integer
+-diastolic: Integer
+-ldl: Integer
+-tri: Integer
+-ophthalmologyVisitForm: OphthalmologyVisitForm 
+-houseSmokingStatus: HouseholdSmokingStatus
+-patientSmokingStatus: PatientSmokingStatus
+-prescriptions: List&lt;Prescription&gt;
+-diagnoses: List&lt;Diagnosis&gt;
+--
+/Getters + setters for fields above/
++OfficeVisitForm(ov: OfficeVisit)</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>720</x><y>780</y><w>610</w><h>300</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;&lt;-</panel_attributes><additional_attributes>10;10;120;10;120;280;590;280;590;210</additional_attributes></element><element><id>Relation</id><coordinates><x>250</x><y>660</y><w>160</w><h>420</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>10;10;10;30;130;30;130;400;140;400</additional_attributes></element></diagram>

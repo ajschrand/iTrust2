@@ -1,0 +1,734 @@
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:include="layout :: head(title=~{::title},links=~{::script})">
+<title>Request Appointment</title>
+<script th:src="@{/js/dateTimeService.js}"
+		src="../js/dateTimeService.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+</head>
+
+<body th:include="layout :: body" th:with="content=~{::content}">
+	<div th:fragment="content">
+	
+		<style>
+			.panel-default > .panel-heading-1 {
+				background-color: #2b2b2b;
+				border-color: #2b2b2b;
+				color: #f0f0f0;
+				font-weight: 300;
+			}
+			
+			.panel-default > .panel-heading-2 {
+				background-color: #7d7d7d;
+				border-color: #7d7d7d;
+				color: #f0f0f0;
+				font-weight: 300;
+			}
+			
+			.panel-default > .panel-heading-3 {
+				background-color: #d9d9d9;
+				border-color: #d9d9d9;
+				font-weight: 300;
+			}
+			
+			.panel-default > .panel-body-1 {
+				background-color: #2b2b2b;
+			}
+			
+			.panel-default > .panel-body-2 {
+				background-color: #7d7d7d;
+			}
+			
+			.panel-default > .panel-footer-2 {
+				background-color: #7d7d7d;
+				border: 1px solid #7d7d7d;
+				border-color: #7d7d7d;
+			}
+			
+			.table-striped>tbody>tr {
+				background-color: #5e5e5e;
+				color: #f0f0f0;
+				font-weight: 300;
+			}
+			
+			.table-striped>tbody>tr:nth-child(odd)>td, 
+			.table-striped>tbody>tr:nth-child(odd)>th {
+			    background-color: #7d7d7d;
+			    border: 1px solid #7d7d7d;;
+			    color: #f0f0f0;
+				font-weight: 300;
+			 }
+			 
+			 .table-striped>tbody {
+			    background-color: #7d7d7d;
+			    color: #f0f0f0;
+				font-weight: 300;
+				font-size: 14px;
+			 }
+			 
+			 .table-striped>thead {
+			 	background-color: #5e5e5e;
+				border: 1px solid #5e5e5e;
+				color: #f0f0f0;
+				font-weight: 300;
+				font-size: 14px;
+			 }
+			 
+			 .table-striped {
+			 	border: 1px solid #5e5e5e;
+			 	background-color: #5e5e5e;
+			 	border-color: #5e5e5e;
+			 	color: #2b2b2b;
+			 }
+			 
+			 .table-striped>thead>tr>th {
+			 	border: 1px solid #5e5e5e;
+			 	background-color: #5e5e5e;
+			 	border-color: #5e5e5e;
+			 	font-weight: 400;
+			 }
+	</style>
+
+		<script th:inline="javascript">
+		/* Otherwise Thymeleaf tries to parse Javascript as XML and breaks itself sometimes.  Sigh */
+		/*<![CDATA[*/
+			var app = angular.module("manageAppointmentRequestApp", ['dateTimeServices']);
+
+			/**
+			 * A filter to humanize the text to be more user friendly.
+			 */
+			app.filter('humanize', function() {
+				return function(input) {
+					return input.toLowerCase().split('_')
+						.map((word) => word.charAt(0).toUpperCase() + word.substring(1))
+						.join(' ');
+				}
+            });
+
+			app.controller('manageAppointmentRequestCtrl', function($scope, $http, dateTimeService) {
+				
+				/**
+				 * Page initial load and reset actions
+				 */
+				$scope.reset = function () {
+					// Reset data
+					$scope.appointment = {};
+					$scope.hcps = [];
+					$scope.selectedAppointment = {};
+					
+					// Load pending appointments
+					$scope.loadPendingAppointments();
+					
+					// Load upcoming appointments
+					$scope.loadUpcomingAppointments();
+					
+					// Expand buttons (accordion)
+					$scope.expandButtonUpcoming = "expand_more";
+					$scope.expandStatusUpcoming = false;
+					$scope.expandButtonPending = "expand_more";
+					$scope.expandStatusPending = false;
+					$scope.expandButtonRequest = "expand_more";
+					$scope.expandStatusRequest = false;
+					
+					$scope.deleteSuccess = false;
+					$scope.showDetails = false;
+					$scope.showCancel = false;
+					$scope.errorList = [];
+					$scope.deletedItems = [];
+					$scope.nonDeletedItems = [];
+					$scope.deleteMessage = "";
+					$scope.deleteDone = false;
+					$scope.cancelList = [];
+				}
+				
+				/**
+				 * Loads the appointment types from the API.
+				 */
+				$http.get("/iTrust2/api/v1/appointmenttype")
+					.then(function (response) {
+						$scope.appointmentTypes = response.data;
+					});
+				
+				/**
+				 * Loads possible vaccine types from API.
+				 */
+				$http.get("/iTrust2/api/v1/vaccines")
+					.then(function (response) {
+						$scope.vaccineTypes = response.data.filter((type) => type.isAvailable === true);
+	  				}
+				);
+				
+				/**
+				 * Load pending appointments for patient.
+				 */
+				$scope.loadPendingAppointments = function() {
+					$http.get("/iTrust2/api/v1/appointmentrequest").then(
+						function(response) {
+							$scope.pendingAppointments = response.data;
+
+							if ($scope.pendingAppointments && !$scope.pendingAppointments.length) {
+								$scope.errorMsgPendingAppointments = "No appointment requests found.";
+								$scope.noPendingAppointments = true;
+							} else {
+								$scope.noPendingAppointments = false;
+							}
+						}
+					);
+				}
+				
+				/**
+				 * Load upcoming appointments for patient.
+				 */
+ 				 $scope.loadUpcomingAppointments = function() {
+					 $scope.upcomingAppointments = [];
+					 // Get upcoming appointments
+					 $http.get("/iTrust2/api/v1/appointmentrequest/approved")
+					 .then(
+						function(response) {
+							// Set upcomingAppointments to data
+							$scope.upcomingAppointments = response.data;
+							console.log(response.data);
+							// If no upcoming Appointments
+							if ($scope.upcomingAppointments && !$scope.upcomingAppointments.length) {
+								$scope.errorMsgUpcomingAppointments = "No upcoming appointments found.";
+								$scope.noUpcomingAppointments = true;
+							} else {
+								$scope.noUpcomingAppointments = false;
+							}
+						}	 
+					 );
+				 }
+				
+				/**
+			     * Expand function for upcoming appointments section
+				 */
+				$scope.expandUpcoming = function() {
+					if ($scope.expandButtonUpcoming === "expand_more") {
+						$scope.expandButtonUpcoming = "expand_less";
+						$scope.expandStatusUpcoming = true;
+					} else {
+						$scope.expandButtonUpcoming = "expand_more";
+						$scope.expandStatusUpcoming = false;
+					}
+				}
+				
+				/**
+			     * Expand function for pending appointments section
+				 */
+				$scope.expandPending = function() {
+					if ($scope.expandButtonPending === "expand_more") {
+						$scope.expandButtonPending = "expand_less";
+						$scope.expandStatusPending = true;
+					} else {
+						$scope.expandButtonPending = "expand_more";
+						$scope.expandStatusPending = false;
+					}
+				}
+				
+				/**
+			     * Expand function for request appointment section
+				 */
+				$scope.expandRequest = function() {
+					if ($scope.expandButtonRequest === "expand_more") {
+						$scope.expandButtonRequest = "expand_less";
+						$scope.expandStatusRequest = true;
+					} else {
+						$scope.expandButtonRequest = "expand_more";
+						$scope.expandStatusRequest = false;
+					}
+				}
+				
+				/**
+				 * Gets the personnel for the given role and adds it to the doctors object.
+				 * @param {string} role The role for which to get a list of personnel.
+				 */
+				$scope.getPersonnelByRole = function(roleObj) {
+					if (Array.isArray(roleObj)) {
+						for (var role of roleObj) {
+							$scope.getPersonnelByRole(role);
+						}
+					} else {
+						$http.get(`/iTrust2/api/v1/personnel/getbyroles/ROLE_${roleObj}/statistics`).then(
+							function(response) {
+								for (var user of response.data) {
+									$scope.hcps.push(user);
+								}
+							}, function(rejection) {
+								$scope.hcps = [];
+								$scope.message = "";
+								$scope.errorMsg += `${roleObj} not found\n`;
+							});
+					}
+				}
+				 				
+				/**
+				 * Loads the proper list of HCPs for the current appointment type.
+				 */
+				$scope.getHCPsForType = function() {
+					const type = $scope.appointment.type;
+					$scope.hcps = [];
+					
+					if (type === 'GENERAL_OPHTHALMOLOGY') {
+						// Gets all of the ophthalmology personnel
+						$scope.getPersonnelByRole(['OD', 'OPH']);
+					} else if (type === 'OPHTHALMOLOGY_SURGERY') {
+						// Gets all of the ophthalmologist personnel
+						$scope.getPersonnelByRole('OPH');
+					} else if (type === 'VACCINATION') {
+						// Gets all of the vaccinator personnel
+						$scope.getPersonnelByRole(['HCP', 'VACCINATOR']);
+					} else {
+						// Gets all of the doctor personnel
+						$scope.getPersonnelByRole(['HCP']);
+					}
+				}
+				
+				/**
+				 * Submits the appointment request.
+				 */
+				$scope.submitAppointmentRequest = function() {
+					$scope.showError = false;
+					$scope.showMessage = false;
+					$scope.errorList = [];
+					$scope.errorMsg = "";
+
+					// Validate request date
+					var date = new Date($scope.inputDate);
+					const now = new Date();
+					if (!dateTimeService.isValidDate(date) || date - now < 0) {
+						$scope.errorList.push({message: "Please input a valid date"});
+					}
+
+					const time = new Date($scope.inputTime);
+					if (!dateTimeService.isValidDate(time)) {
+						$scope.errorList.push({message: "Please input a valid date"});
+					}
+
+					if (!$scope.errorMsg.length) {
+						date.setHours(time.getHours());
+						date.setMinutes(time.getMinutes());
+						
+						if (!dateTimeService.isValidDate(date) || date - now < 0) {
+							$scope.errorList.push({message: "Please input a valid date and time"});
+						} else {
+							$scope.appointment.date = date.toISOString();
+							delete $scope.appointment.time;
+						}
+					}
+
+					if (!$scope.appointment.hcp) {
+		            	$scope.errorList.push({message: "Please select an HCP"});
+		            	$scope.message = "";
+		                $scope.messagePendingAppointments = "";
+		            }
+		            
+		            if ($scope.appointment.comments && $scope.appointment.comments.length > 50) {
+		            	$scope.errorList.push({message: "Comments must be less than 50 characters"});
+		            	$scope.message = "";
+		                $scope.messagePendingAppointments = "";
+		            }
+		            
+		            if ($scope.appointment.type === "VACCINATION") {
+		            	if (!$scope.appointment.vaccineType) {
+		            		$scope.errorList.push({message: "Please select a vaccine type"});
+		            		$scope.message = "";
+		            		$scope.messagePendingAppointments = "";
+		            	}
+		            	
+		            	// Add generic error message to front
+						if ($scope.errorMsg) {
+							$scope.errorMsg = "Could not submit appointment request";
+							$scope.showError = true;
+						}
+		            	
+		            	// Construct correct object for a vaccine appointment request
+		            	const appointmentObject = {
+		            			hcp: $scope.appointment.hcp,
+		            			date: $scope.appointment.date,
+		            			type: $scope.appointment.type,
+		            			comments: $scope.appointment.comments || "",
+		            			vaccineType: $scope.appointment.vaccineType,
+		            			vaccineStatus: "Not yet vaccinated",
+		            			status: "APPROVED",
+		            	};
+		            	
+						$http.post("/iTrust2/api/v1/vaccineappointments", appointmentObject).then( 
+							function(response) {	
+								$scope.loadPendingAppointments();
+								$scope.loadUpcomingAppointments();
+								$scope.message = "Your appointment request has been requested successfully."
+								$scope.messagePendingAppointments = "";
+								$scope.appointment = {};
+								$scope.inputDate = null;
+								$scope.inputTime = null;
+								$scope.errorMsgPendingAppointments = "";
+								$scope.selectedAppointment = {};
+								$scope.showError = false;
+								$scope.showMessage = true;
+								setTimeout(function() {
+									$scope.showMessage = false;
+								}, 4000);
+							}, function(rejection) {
+								$scope.errorMsg = "Could not complete appointment request\n"
+								$scope.showError = true;
+								$scope.showMessage = false;
+								$scope.message = "";
+								$scope.messagePendingAppointments = "";
+							});
+		            } else {
+		            	// Add generic error message to front
+						if ($scope.errorMsg) {
+							$scope.errorMsg = "Could not submit appointment request";
+							$scope.showError = true;
+						}
+		            	
+		            	// Construct correct object for a non-vaccine appointment request
+		            	const appointmentObject = {
+		            			status: "PENDING",
+		            			hcp: $scope.appointment.hcp,
+		            			date: $scope.appointment.date,
+		            			type: $scope.appointment.type,
+		            			comments: $scope.appointment.comments
+		            	};
+		            	
+		            	console.log(appointmentObject);
+		            	console.log($scope.errorList);
+		            	
+						$http.post("/iTrust2/api/v1/appointmentrequests", $scope.appointment).then( 
+							function(response) {	
+								$scope.loadPendingAppointments();
+								$scope.loadUpcomingAppointments();
+								$scope.message = "Your appointment request has been requested successfully."
+								$scope.messagePendingAppointments = "";
+								$scope.appointment = {};
+								$scope.inputDate = null;
+								$scope.inputTime = null;
+								$scope.errorMsgPendingAppointments = "";
+								$scope.selectedAppointment = {};
+								$scope.showError = false;
+								$scope.showMessage = true;
+								setTimeout(function() {
+									$showMessage = false;
+								}, 4000);
+							}, function(rejection) {
+								$scope.errorMsg = "Could not complete appointment request"
+								$scope.message = "";
+								$scope.messagePendingAppointments = "";
+								$scope.showError = true;
+								$scope.showMessage = false;
+							}
+						);
+		            }
+				}
+						
+				$scope.deleteAppointment = function() {
+					$http.delete("/iTrust2/api/v1/appointmentrequests/" + $scope.selectedAppointment.id).then(
+						function (response) {
+							$scope.messagePendingAppointments = "Your appointment request was successfully deleted.";
+							$scope.message = "";
+			                $scope.errorMsgPendingAppointments = "";
+			                $scope.selectedAppointment = {};
+			                $scope.deleteSuccess = true;
+			                if ($scope.pendingAppointments.length === 1) {
+			                	$scope.pendingAppointments = [];
+			                	setTimeout(function() {
+				                	$scope.deleteSuccess = false;
+				                	$scope.loadPendingAppointments();
+				                }, 3000);
+			                } else {
+			                	$scope.loadPendingAppointments();
+			                	setTimeout(function() {
+				                	$scope.deleteSuccess = false;
+				                }, 3000);
+			                }
+			                
+			            }, function (rejection) {
+			                $scope.errorMsgPendingAppointments = "Could not remove appointment\n";
+			            });
+				} 
+				
+				$scope.hideError = function() {
+					$scope.showError = false;
+				}
+				
+				$scope.handleVaccinationDetails = function() {
+					$scope.showDetails = !$scope.showDetails;
+				}
+				
+				$scope.handleShowCancel = function() {
+					$scope.showCancel = !$scope.showCancel;
+				}
+				
+				$scope.handleSelectCancel = function(id) {
+					if ($scope.cancelList.includes(id)) {
+						$scope.cancelList = $scope.cancelList.filter(function(value, index, arr) {
+							return value !== id;
+						});
+					} else {
+						$scope.cancelList.push(id);
+					}
+					console.log($scope.cancelList);
+				}
+				
+				$scope.handleCancelDelete = function() {
+					$scope.deletedItems = [];
+					$scope.nonDeletedItems = [];
+					$scope.deleteMessage = "";
+					$scope.deleteDone = false;
+					$scope.showError = false;
+					$scope.showWarning = false;
+					$scope.showSuccess = true;
+					let index = 0;
+					let count = 0;
+					for (let item of $scope.cancelList) {
+						console.log("Deleteing item " + item);
+						$http.delete("/iTrust2/api/v1/appointmentrequests/" + item).then(
+								function (response) {
+									$scope.deletedItems.push(item);
+									$scope.loadUpcomingAppointments();
+									count++;
+					            }, function (rejection) {
+					                $scope.nonDeletedItems.push(item);
+					                console.log($scope.nonDeletedItems);
+					                if ($scope.showWarning && index === $scope.cancelList.length - 1) {
+					                	$scope.showWarning = false;
+					                	$scope.showError = true;
+					                } else {
+					                	$scope.showWarning = true;
+					                }
+					                $scope.showSuccess = false;
+					                count++;
+					            });
+						index++;
+					}
+					/* while (count < $scope.cancelList.length); */
+					console.log(count);
+					if ($scope.showWarning) {
+						$scope.deleteMessage = "Not all appointments were successfully cancelled";
+					} else if ($scope.showError) {
+						$scope.deleteMessage = "Error while cancelling appointments, no appointments have been cancelled"
+					} else if ($scope.showSuccess) {
+						if ($scope.cancelList.length > 1) {
+							$scope.deleteMessage = "Appointments successfully cancelled";
+						} else {
+							$scope.deleteMessage = "Appointment successfully cancelled";
+						}
+						
+					}
+					$scope.deleteDone = true;
+					$scope.cancelList = [];
+					$scope.showCancel = false;
+					setTimeout(() => {
+						$scope.deleteDone = false;
+						$scope.showError = false;
+						$scope.showWarning = false;
+						$scope.showSuccess = false;
+					}, 4000);
+				}
+				
+				// Initialize application
+				$scope.reset();
+			});
+			/*]]>*/
+		</script>
+
+		<div ng-app="manageAppointmentRequestApp"
+			ng-controller="manageAppointmentRequestCtrl">
+			<div class="panel panel-default" style="margin-top: 20px">
+				<div class="panel-heading" style="height: 70px">
+					<div class="panel-title" style="font-size: 20px; font-weight: 500; margin-top: 10px">Manage Appointment Requests</div>
+				</div>
+				<div class="panel-body">
+					<div class="row" style="margin-top: 15px; margin-left: 0px;">
+						<div class="col-md-5" style="margin-right: 15px">
+							<div class="row">
+								<div class="panel panel-default">
+									<div class="panel-heading-1 panel-heading">
+										<span class="panel-title">Pending Medical Appointments</span>
+										<button class="btn btn-xs" style="font-size: 1rem; position: absolute; right: 8px; top: 8px; color: #2b2b2b" ng-click="expandPending()"><i class="material-icons">{{expandButtonPending}}</i></button>
+									</div>
+									<div class="panel-body-1 panel-body" ng-show="expandStatusPending && noPendingAppointments">
+										<div class="alert alert-warning" name="errorMsg" style="margin-bottom: 0px">{{errorMsgPendingAppointments}}</div>
+									</div>
+									<div class="panel-body-1 panel-body" ng-show="expandStatusPending && !noPendingAppointments">
+										<div class="col radio-box">
+											<div class="form-check">
+												<ul style="list-style: none; padding: 0;">
+													<li ng-repeat="appt in pendingAppointments"><span> <input
+															type="radio" ng-model="selectedAppointment.id" name="appt"
+															id="appt{{appt.id}}" value="{{appt.id}}" required="true" />
+															<label for="appt{{appt.id}}"
+															style="vertical-align: middle; padding-left: 10px; cursor: pointer; color: #f0f0f0; font-weight: 400">
+																Type: {{appt.type | humanize}}<br /> Date: {{appt.date |
+																date : 'MM/dd/yyyy'}}<br /> Time: {{appt.date | date :
+																'shortTime'}}<br /> Status: {{appt.status | humanize}}
+														</label>
+													</span></li>
+												</ul>
+											</div>
+			
+											<button class="btn btn-danger" ng-if="pendingAppointments.length"
+												ng-click="deleteAppointment()" name="deleteRequest">Delete</button>
+												
+											<div class="alert alert-success" name="success" ng-show="deleteSuccess" style="margin-bottom: 0px; margin-top: 10px">{{messagePendingAppointments}}</div>
+										</div>
+									</div>
+								</div>
+							</div>
+							
+							<div class="row">
+								<div class="panel panel-default">
+									<div class="panel-heading-2 panel-heading">
+										<span class="panel-title">Upcoming Medical Appointments</span>
+										<button class="btn btn-xs" style="font-size: 1rem; position: absolute; right: 8px; margin-top: -3px; color: #2b2b2b" ng-click="expandUpcoming()"><i class="material-icons">{{expandButtonUpcoming}}</i></button>
+									</div>
+									<div class="panel-body-2 panel-body" ng-show="expandStatusUpcoming && noUpcomingAppointments">
+										<div class="alert alert-warning" name="errorMsg" style="margin-bottom: 0px">{{errorMsgUpcomingAppointments}}</div>
+									</div>
+									<div class="panel-body-2 panel-body" ng-show="expandStatusUpcoming && !noUpcomingAppointments" style="height: 15px">
+										<div style="position: absolute; margin-top: -15px; right: 8px">
+											<button class="btn btn-xs" ng-click="handleVaccinationDetails()" ng-show="!showDetails" style="background-color: #94b38d;">Show Vaccination Details</button>
+											<button class="btn btn-xs" ng-click="handleVaccinationDetails()" ng-show="showDetails" style="background-color: #bf9930;">Hide Vaccination Details</button>
+											<button class="btn btn-xs" ng-click="handleShowCancel()" ng-show="!showCancel" style="background-color: #d16c62;">Cancel Appointment</button>
+											<button class="btn btn-xs" ng-click="handleShowCancel()" ng-show="showCancel" style="background-color: #758abf;">Nevermind</button>
+											<button class="btn btn-xs" ng-click="handleCancelDelete()" ng-show="showCancel && cancelList.length" style="background-color: #d16c62;">Cancel Selected Appointments</button>
+											
+										</div>
+									</div>
+									<table class="table table-striped" ng-show="expandStatusUpcoming && !noUpcomingAppointments">
+										<thead>
+											<tr>
+												<th ng-show="showCancel">Cancel</th>
+												<th>Type</th>
+												<th>Date</th>
+												<th>Time</th>
+												<th ng-show="showDetails">Vaccine Type</th>
+												<th ng-show="showDetails">Dose</th>
+												<th>Comments</th>
+											</tr>
+										</thead>
+										<tbody>
+											<tr name="upcomingTableRow"
+												ng-repeat="appt in upcomingAppointments"
+												appointmentId={{appt.id}}>
+												<td ng-show="showCancel" name="cancelCell">
+													<div class="form-check">
+														<input type="checkbox" class="form-check-input" ng-click="handleSelectCancel(appt.id)">
+													</div>
+												</td>
+												<td name="typeCell">{{appt.type | humanize}}</td>
+												<td name="dateCell">{{appt.date | date : 'MM/dd/yyyy'}}</td>
+												<td name="timeCell">{{appt.date | date : 'shortTime'}}</td>
+												<td name="vaccineTypeCell" ng-show="appt.type === 'VACCINATION' && showDetails">{{appt.vaccine.name | humanize}}</td>
+												<td name="vaccineTypeCell" ng-show="appt.type !== 'VACCINATION' && showDetails">N/A</td>
+												<td name="vaccineDoseCell" ng-show="appt.type === 'VACCINATION' && showDetails"># {{appt.patient.doses}} of {{appt.vaccine.numDoses}}<!-- {{appt.dose | humanize}} --></td>
+												<td name="vaccineDoseCell" ng-show="appt.type !== 'VACCINATION' && showDetails">N/A</td>
+												<td name="commentsCell">{{appt.comments | humanize}}</td>
+											</tr>
+											
+										</tbody>
+									</table>
+									<div class="panel-footer-2 panel-footer" ng-show="deleteDone">
+										<div class="alert alert-danger" name="errorMsg" ng-show="showError">{{deleteMessage}}</div>
+										<div class="alert alert-warning" name="errorMsg" ng-show="showWarning">{{deleteMessage}}</div>
+										<div class="alert alert-success" name="success" ng-show="showSuccess">{{deleteMessage}}</div>
+									</div>
+								</div>
+							</div>
+						</div>
+		
+						<div class="col-md-6" style="margin-right: 15px">
+							<div class="row">
+								<div class="panel panel-default">
+									<div class="panel-heading-3 panel-heading">
+										<span class="panel-title">Request Medical Appointment</span>
+										<button class="btn btn-xs" style="font-size: 1rem; position: absolute; right: 8px; top: 8px;" ng-click="expandRequest()"><i class="material-icons">{{expandButtonRequest}}</i></button>
+									</div>
+									<div class="panel-body" ng-show="expandStatusRequest">
+										<form>
+											<div class="row">
+												<div class="col-sm-6">
+													<div class="form-group" style="width: 300px">
+														<label for="type">Type:</label> <select
+															ng-model="appointment.type" name="type" class="form-control" id="selectInput"
+															ng-change="getHCPsForType()" ng-focus="hideError()">
+															<option ng-focus="hideError()" ng-repeat="type in appointmentTypes" value="{{type}}">{{type
+																| humanize}}</option>
+														</select>
+													</div>
+													<div class="form-group" style="width: 300px">
+														<label for="hcp">HCP:</label>
+															<select ng-focus="hideError()" ng-model="appointment.hcp" name="hcp" id="hcp"
+															class="form-control" ng-disabled="!appointment.type">
+																<option ng-repeat="hcp in hcps" value="{{hcp.username}}">{{hcp.username}} ({{hcp.statistics.averageVisitSatisfaction == 0 ? 'N/A' : ((hcp.statistics.averageVisitSatisfaction + hcp.statistics.averageTreatmentSatisfaction) / 2 ) + '/5 stars'}})</option>
+														</select>
+													</div>
+												</div>
+												
+												<div class="col-sm-6">
+													<div class="form-group">
+														<label for="date">Date:</label> <input ng-focus="hideError()" id="date" type="date"
+															class="input-group date" ng-model="inputDate" name="date"
+															ng-disabled="!appointment.type" required="true" />
+													</div>
+					
+													<div class="form-group">
+														<label for="time">Time:</label> <input ng-focus="hideError()" id="time" type="time"
+															name="time" class="input-group time" ng-model="inputTime"
+															ng-disabled="!appointment.type" required="true" />
+													</div>
+												</div>
+											</div>
+											<div class="row">
+												<div class="col-10" style="margin: 15px">
+													<div class="form-group" ng-show="appointment.type === 'VACCINATION'">
+														<label for="vaccineType">Vaccine Type:</label>
+														<select 
+															ng-focus="hideError()"
+															ng-model="appointment.vaccineType" 
+															name="vaccineType" id="vaccineType"
+															class="form-control" 
+															ng-disabled="!appointment.type">
+															<option 
+																ng-repeat="type in vaccineTypes" 
+																value="{{type.name}}"
+															>
+																{{type.name}}
+															</option>
+														</select>
+													</div>
+												</div>
+												<div class="col-8" style="margin: 15px">
+													<div class="form-group">
+														<label for="comments">Comments:</label>
+														<textarea id="comments" class="form-control"
+															ng-focus="hideError()"
+															ng-disabled="!appointment.type"
+															ng-model="appointment.comments" name="comments">
+														</textarea>
+													</div>
+												</div>
+											</div>
+			
+											<div class="form-group">
+												<button type="submit" class="btn btn-primary"
+													ng-click="submitAppointmentRequest()" name="submitAppointmentRequest()">Submit
+													Request</button>
+											</div>
+			
+											<ul class="list-group" ng-show="showError">
+												<li class="list-group-item list-group-item-warning" ng-repeat="err in errorList"><span>{{err.message}}</span></li>
+											</ul>
+											<div class="alert alert-danger" name="errorMsg" ng-show="showError" style="margin-top: 10px">{{errorMsg}}</div>
+											<div class="alert alert-success" name="success" ng-show="showMessage" style="margin-top: 10px">{{message}}</div>
+										</form>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+</body>
+</html>

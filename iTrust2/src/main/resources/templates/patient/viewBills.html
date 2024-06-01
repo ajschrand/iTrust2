@@ -1,0 +1,217 @@
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:include="layout :: head(title=~{::title},links=~{::script})">
+<title>View Bills</title>
+	<script th:src="@{/js/dateTimeService.js}"
+			src="../../../js/dateTimeService.js"></script>
+	<script th:src="@{/js/jk-rating-stars.js}"
+			src="../../../js/jk-rating-stars.js"></script>
+
+</head>
+
+<body th:include="layout :: body" th:with="content=~{::content}">
+	<div th:fragment="content">
+
+
+		<script th:inline="javascript">
+      /* Otherwise Thymeleaf tries to parse Javascript as XML and breaks itself sometimes.  Sigh */
+      /*<![CDATA[*/
+      var app = angular.module("viewBillsApp", ['dateTimeServices', 'jkAngularRatingStars']);
+
+	  /**
+	   * A filter to humanize the text to be more user friendly.
+	   */
+	  app.filter('humanize', function() {
+		  return function (input) {
+
+			  if (input == null || input == "") {
+			  	return "";
+			  }
+
+			  return input.toLowerCase().split('_')
+					  .map((word) => word.charAt(0).toUpperCase() + word.substring(1))
+					  .join(' ');
+		  }
+	  });
+
+      app.controller('viewBillsCtrl', function ($scope, $http, dateTimeService) {
+        $scope.bills = [];
+        $scope.loadTable = function () {
+          $http.get("/iTrust2/api/v1/bills/mybills").then(
+            function (response) {
+              $scope.bills = response.data;
+              $scope.errorMsg = "";
+            }, function (rejection) {
+              $scope.bills = [];
+              $scope.errorMsg = "Could not display bills.";
+            });
+        }
+        
+        $scope.loadTable();
+
+        $scope.bill = null;
+        $scope.cptCodesForBill = null;
+        $scope.paymentHistory = null;
+        $scope.selectbill = function (bill) {
+        	
+            // Stop displaying previous panels
+            $scope.display = false;
+            $scope.displaySurvey = false;
+        	
+            $scope.bill = bill;
+            
+            $scope.cptCodesForBill = bill.cptCodes;
+            $scope.paymentHistory = bill.paymentList;
+
+		}
+
+        // View the bill that was selected in the table
+		  $scope.viewSelectedbill = function() {
+			  // Get the selected bill from the api.
+			  // The id of the selected bill is $scope.selectedOfficebill
+			  // Once you get the details of the bill, store it in $scope.bill
+			  $scope.display = true;
+			  $scope.displaySurvey = false;
+		  }
+
+	  });
+			/*]]>*/
+    </script>
+
+		<div ng-app="viewBillsApp" ng-controller="viewBillsCtrl">
+			<br><div class="container">
+				<div class="row">
+					<div class="col-md-12">
+						<div class="panel panel-primary">
+							<div class="panel-heading">
+								<h3>View Bills</h3>
+							</div>
+							<div class="panel-body">
+								<table class="table table-bordered">
+									<caption>Documented Bills:</caption>
+									
+									<thead>
+										<tr>
+											<th> </th>
+											<th>Bill Date</th>
+											<th>Bill Status</th>
+											<th>Bill Total</th>
+										</tr>
+									</thead>
+									<tbody>
+										<tr name="officebillsTableRow"
+											ng-repeat="b in bills | orderBy: '+date'"
+											billId={{b.id}}>
+											<td name="selectCell"><input type="radio" name="selectRow" ng-model="$parent.selectedOfficebill" ng-value="b.id" ng-click="selectbill(b)"></td>
+											<td name="billDateCell">{{b.date | date : 'MM/dd/yyyy'}}</td>
+											<td name="billStatusCell">{{b.status}}</td>
+											<td name="billCostCell">${{b.remainingCost}}</td>
+										</tr>
+									</tbody>
+								</table>
+								
+								<!-- Error Messages -->
+								<div class="row">
+
+									<div class="col-md-12 text-right">
+										<div style="white-space: pre-line;">
+											<div name="errorMsg" class="text-danger">{{errorMsg}}</div>
+										</div>
+									</div>
+								</div>
+								
+							</div>
+							
+							<div class="panel-footer text-right">
+								<!-- button may have to be inside form tag, or just a submit function for the form? -->
+								<button class="btn btn-primary btn-lg" ng-click="viewSelectedbill()"
+									name="viewbill" ng-disabled="!bill">View Details</button>
+							</div>
+							
+						</div>
+						
+						
+						<!-- Display the information about the selected bill -->
+						<div class='panel panel-default' ng-if="bill && (display)">
+
+							<!-- Show correct heading based on what button was pressed -->
+							<div class="panel-heading" ng-show="display">
+								<h3>Selected Bill Details</h3>
+							</div>
+							
+							<div class='panel-body'>
+
+								<div class="row">
+								
+									<div class="form-group col-md-2">
+										<label for="date">Bill Date:</label> <input id="date" type="text"
+											class="form-control" value="{{bill.date  | date :
+													'MM/dd/yyyy'}}" name="date" disabled />
+									</div>
+		
+									<div class="form-group col-md-2">
+										<label for="hcp">Attending HCP:</label> <input id="hcp" type="hcp"
+											name="hcp" class="form-control" value="{{bill.hcp.username}}" disabled/>
+									</div>
+									
+									<div class="form-group col-md-2">
+										<label for="status">Bill Status:</label> <input id="status" type="status"
+											name="status" class="form-control" value="{{bill.status}}" disabled/>
+									</div>
+									
+									<div class="form-group col-md-2">
+										<label for="amountPaid">Total Amount Paid:</label> <input id="amountPaid" type="amountPaid"
+											name="amountPaid" class="form-control" value="{{bill.amountPaid}}" disabled/>
+									</div>
+									
+								</div>
+								
+								<div class="row">
+									<div class="form-group col-md-4">
+										<label>CPT Codes:</label>
+		
+										<div class="panel panel-default">
+											<div class="panel-body">
+												<div class="form-check">
+													<ul
+														style="max-height: 15%; overflow: auto; list-style: none;">
+														<li ng-repeat="c in cptCodesForBill">
+															Cost: ${{c.cost}}
+															| Description: {{c.description}}
+														</label></li>
+													</ul>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+								
+								<div class="row">
+									<div class="form-group col-md-4">
+										<label>Payment History:</label>
+		
+										<div class="panel panel-default">
+											<div class="panel-body">
+												<div class="form-check">
+													<ul
+														style="max-height: 15%; overflow: auto; list-style: none;">
+														<li ng-repeat="p in paymentHistory">
+															Payment Amount: ${{p.amount}}
+															| Type: {{p.paymentType}}
+														</label></li>
+													</ul>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</body>
+
+</html>

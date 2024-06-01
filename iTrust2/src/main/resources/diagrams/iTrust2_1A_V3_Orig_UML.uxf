@@ -1,0 +1,254 @@
+<diagram program="umletino" version="15.0.0"><zoom_level>6</zoom_level><element><id>UMLClass</id><coordinates><x>186</x><y>168</y><w>126</w><h>174</h></coordinates><panel_attributes>Role
+&lt;&lt;Enum&gt;&gt;
+--
++ ROLE_Patient
++ ROLE_HCP
++ ROLE_ADMIN
++ ROLE_ER
++ ROLE_OD
++ ROLE_OPH
++ ROLE_VIROLOGIST
++ ROLE_VACCINATOR 
+- int code
+- String landingPage
+--
+- Role(int code, String landingPage)
++ getCode(): int
++ getLanding(): String
+group=group-0</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>696</x><y>60</y><w>186</w><h>558</h></coordinates><panel_attributes>Patient
+--
+- String firstName
+- String preferredName
+- String lastName
+- String address1
+- String address2
+- String city
+- State state
+- String zip
+- String phone
+- String email
+- String doses
+- VaccineType vaccine
+- LocalDate dateOfBirth
+- LocalDate dateOfDeath
+- String causeOfDeath
+- BloodType bloodType
+- Ethnicity ethnicity
+- Gender gender
+- VaccinationStatus status
+--
++ Patient
++ Patient(UserForm uf)
++ update(PatientForm form): Patient
++ getFirstName(): String
++ setFirstName(String firstName): void
++ getPreferredName(): String
++ setPreferredName(String preferredName): void
++ getlastName(): String
++ setLastName()String lastName: void
++ getAddress1(): String
++ setAddress2(String address1): void
++ getAddress2(): String
++ setAddress2(String address2): void
++ getCity(): String
++ setCity(String city): void
++ getState(): State
++ setState(State state): void
++ getZip(): String
++ setZip(String zip): void
++ getPhone(): String
++ setPhone(String phone): void
++ getEmail(): String
++ setEmail(String email): void
++ getDateOfBirth(): LocalDate
++ setDateOfBirth(LocalDate dateOfBirth): void
++ getDateOfDeath(): LocalDate
++ setDateOfDeath(LocalDate dateOfDeath): void
++ getCauseOfDeath(): String
++ setCauseOfDeath(String causeOfDeath): void
++ getBloodType(): BloodType
++ setBloodType(BloodType bloodType): void
++ getVaccinationStatus(): VaccinationStatus
++ setVaccinationStatus(VaccinationStatus status): void
++ getVaccineType(): VaccineType
++ setVaccineType(VaccineType vaccine): void
++ getDoses(): String
++ setDoses(String doses): void
++ getEthnicity(): Ethnicity
++ setEthnicity(Ethnicity ethnicity): void
++ getGender(): Gender
++ setGender(): void
+group=group-1</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLPackage</id><coordinates><x>186</x><y>156</y><w>126</w><h>186</h></coordinates><panel_attributes>edu.ncsu.csc.iTrust2.models.enum
+bg=#FA8072
+group=group-0</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>462</x><y>102</y><w>150</w><h>210</h></coordinates><panel_attributes>User
+--
+- String username
+- String password
+- Integer enabled
+- Set&lt;Role&gt; roles
+--
+# User()
+# User(String username, String password, 
+             Role role, Integer enabled)
+# User(UserForm form)
++ getUsername(): String
++ setUsername(String username): void
++ getPassword(): String
++ setPassword(String password): void
++ getEnabled(): String
++ setEnabled(Integer enabled): void
++ getRoles(): Collection&lt;Role&gt;
++ setRoles(Set&lt;Role&gt; roles): void
++ addRole(Role role): void
++ hashcode(): int
++ equals(Object obj): boolean
++ getId(): String
++ isDoctor(): boolean
+group=group-1</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>504</x><y>24</y><w>60</w><h>18</h></coordinates><panel_attributes>DomainObject
+group=group-1</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>606</x><y>198</y><w>102</w><h>18</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;-
+group=group-1</panel_attributes><additional_attributes>10;10;150;10</additional_attributes></element><element><id>Relation</id><coordinates><x>528</x><y>36</y><w>18</w><h>78</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;-
+group=group-1</panel_attributes><additional_attributes>10;10;10;110</additional_attributes></element><element><id>Relation</id><coordinates><x>306</x><y>192</y><w>168</w><h>24</h></coordinates><panel_attributes>lt=&lt;-
+m1=1..n</panel_attributes><additional_attributes>260;10;10;10</additional_attributes></element><element><id>UMLClass</id><coordinates><x>0</x><y>180</y><w>144</w><h>78</h></coordinates><panel_attributes>AdminController
+--
++ index(Model model): String
++ manageUser(Model model): String
++ manageHospital(Model model): String
++ drugs(Model model): String
++ vaccines(Model model): String
++ addCode(Model model): String
++ surveys(Model model): String
+group=group-2</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLPackage</id><coordinates><x>0</x><y>162</y><w>144</w><h>96</h></coordinates><panel_attributes>edu.ncsu.csc.iTrust2.controllers.routing
+bg=#F08080
+group=group-2</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLPackage</id><coordinates><x>450</x><y>6</y><w>444</w><h>744</h></coordinates><panel_attributes>edu.ncsu.csc.iTrust2.models
+bg=#6495ED
+group=group-1</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>462</x><y>384</y><w>156</w><h>336</h></coordinates><panel_attributes>&lt;&lt;Java Class&gt;&gt;
+Personnel
+--
+-String firstName
+-String lastName
+-String address1
+-String address2
+-String city
+-State state
+-String zip
+-String phone
+-String email
+-String hospitalId
+--
++Personnel()
++Personnel(UserForm uf)
++update(PersonnelForm form): Personnel
++getFirstName(): String
++setFirstName(String firstName): void
++getLastName(): String
++setLastName(String lastName): void
++getAddress1(): String
++setAddress2(String address1): void
++getAddress2(): String
++setAddress2(String address2): void
++getCity(): String
++setCity(String city): void
++getState(): State
++setState(State state): void
++getZip(): String
++setZip(String zip): void
++getPhone(): String
++setPhone(String phone): void
++getEmail(): String
++setEmail(String email): void
++getHospitalId(): String
++setHospitalId(String hospitalId): void
++toString(): String
+group=group-1</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>534</x><y>306</y><w>18</w><h>90</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;-
+group=group-1</panel_attributes><additional_attributes>10;10;10;130</additional_attributes></element><element><id>UMLClass</id><coordinates><x>174</x><y>426</y><w>156</w><h>312</h></coordinates><panel_attributes>&lt;&lt;Java Class&gt;&gt;
+PersonnelForm
+--
+-username: String
+-firstName: String
+-lastName: String
+-address1: String
+-address2: String
+-city: String
+-state: String
+-zip: String
+-phone: String
+-email: String
+--
++getUsername() : String
++setUsername() : void
++getFirstName() : String
++setFirstName() : void
++getLastName() : String
++setLastName() : void
++getAddress() : String
++setAddress() : void
++getAddress2() : String
++setAddress2() : void
++getCity() : String
++setCity() : void
++getState() : String
++setState() : void
++getZip() : String
++setZip() : void
++getPhone() : String
++setPhone() : void
++getEmail() : String
++setEmail() : void
+group=group-4</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLPackage</id><coordinates><x>168</x><y>402</y><w>186</w><h>384</h></coordinates><panel_attributes>edu.ncsu.csc.iTrust2.forms
+bg=#FF7F24
+group=group-4</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>942</x><y>384</y><w>312</w><h>132</h></coordinates><panel_attributes>&lt;&lt;Java Class&gt;
+APIPersonnelController
+--
+-LoggerUtil loggerUtil
+-PersonnelService service
+-SatisfactionSurveyStatisticsService surveyService
+--
++getPersonnel(): List&lt;Personnel&gt;
++getPersonnel(String id): ResponseEntity
++getCurrentPersonnel(): ResponseEntity
++updatePersonnel(String id, PersonnelForm personnelF): ResponseEntity
++getPersonnelByRole(String role): ResponseEntity
++getPersonnelByRoleWithStatistic(String role): ResponseEntity
+group=group-5</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLPackage</id><coordinates><x>930</x><y>348</y><w>534</w><h>276</h></coordinates><panel_attributes>edu.ncsu.csc.iTrust2.controllers.api
+bg=#DA70D6
+
+group=group-5</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>948</x><y>138</y><w>138</w><h>120</h></coordinates><panel_attributes>&lt;&lt;Abstract Class&gt;&gt;
+Service
+--
+#getRepository(): JpaRepository&lt;T, K&gt;
++save(T obj): void
++findAll(): List&lt;T&gt;
++saveAll(List&lt;T&gt; objects): void
++delete(T obj): void
++deleteAll(): void
++count(): Long
+#findBy(Example&lt;T&gt; example): List&lt;T&gt;
++existsById(K id): boolean
++findById(K id): T
+group=group-6</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLPackage</id><coordinates><x>930</x><y>114</y><w>210</w><h>174</h></coordinates><panel_attributes>edu.ncsu.csc.iTrust2.services
+bg=#54FF9F
+group=group-6</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>1260</x><y>384</y><w>198</w><h>210</h></coordinates><panel_attributes>&lt;&lt;Java Class&gt;&gt;
+APIUserController
+--
+-LoggerUtil: loggerUtil
+-UserService: userService
+_-String: ROLE_ADMIN_
+_-String: ROLE_PATIENT_
+_-String: ROLE_HCP_
+_-String: ROLE_ER_
+_-String: ROLE_LABTECH_
+_-String: ROLE_VIROLOGIST_
+_-String: ROLE_OD_
+_-String: ROLE_OPH_
+_-String: ROLE_VACCINATOR_
+_-String: ROLE_BSM_
+--
+-getUsers(): List&lt;User&gt;
+-getUser(String: id): ResponseEntity
+-createUser(UserForm: userF): ResponseEntity
+-updateUser(String: id, UserForm userF): ResponseEntity
+-deleteUser(String: id): ResponseEntity
+-getRole(): ResponseEntity
+-generateUsers(): ResponseEntity
+-hasRole(String: role): boolean
+--</panel_attributes><additional_attributes></additional_attributes></element></diagram>

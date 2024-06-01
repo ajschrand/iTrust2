@@ -1,0 +1,334 @@
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:include="layout :: head(title=~{::title},links=~{})">
+<title>Admin Vaccine Types</title>
+<link rel="stylesheet"
+	href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+<script
+	src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.min.js"></script>
+</head>
+
+<body th:include="layout :: body" th:with="content=~{::content}">
+	<div th:fragment="content">
+
+
+		<script th:inline="javascript">
+      /* Otherwise Thymeleaf tries to parse Javascript as XML and breaks itself sometimes.  Sigh */
+      /*<![CDATA[*/
+      var app = angular.module("vaccinesApp", []);
+      app.controller('vaccinesCtrl', function ($scope, $http) {
+    	  
+			$scope.expandAdd = function() {
+				if ($scope.expandButtonAdd === "expand_more") {
+					$scope.expandButtonAdd = "expand_less";
+					$scope.expandStatusAdd = true;
+				} else {
+					$scope.expandButtonAdd = "expand_more";
+					$scope.expandStatusAdd = false;
+				}
+			}
+			
+			$scope.expandExisting = function() {
+				if ($scope.expandButtonExisting === "expand_more") {
+					$scope.expandButtonExisting = "expand_less";
+					$scope.expandStatusExisting = true;
+				} else {
+					$scope.expandButtonExisting = "expand_more";
+					$scope.expandStatusExisting = false;
+				}
+			}
+    	  
+    	var checkValidVaccine = (vaccine) => {
+    		var err = [];
+    		if (vaccine.name.length > 64) {
+    			err.push("Name exceeds the character limit of 64");
+    		}
+    		if (vaccine.minAge < 0) {
+    			err.push("Minimum Age must be a positive integer.");
+    		}
+    		if (vaccine.maxAge < 0) {
+    			err.push("Maximum Age must be a positive integer.");
+    		}
+    		if (vaccine.minAge > vaccine.maxAge) {
+    			err.push("Maximum Age must be higher than Minimum Age.");
+    		}
+    		if (vaccine.numDoses < 0) {
+    			err.push("Number of Doses must be a positive integer.");
+    		}
+    		if (vaccine.daysBetweenDoses < 0) {
+    			err.push("Days Between Doses must be a positive integer.");
+    		}
+    		if (vaccine.inventoryAmount < 0) {
+    			err.push("Amount in Inventory must be a positive integer.");
+    		}
+    		return err.join(". ");
+    	}
+
+        $scope.vaccines = [];
+        $scope.noVaccines = false;
+        $scope.loadTable = function () {
+          $http.get("/iTrust2/api/v1/vaccines").then(
+            function (response) {
+              $scope.vaccines = response.data;
+              if ($scope.vaccines.length === 0) {
+            	  $scope.noVaccines = true;
+              } else {
+            	  $scope.noVaccines = false;
+              }
+              $scope.message = "";
+            }, function (rejection) {
+              $scope.vaccines = [];
+              $scope.message = "Could not display vaccines";
+              $scope.noVaccines = true;
+            });
+        }
+
+        $scope.checkboxClick = () => {
+        	console.log($scope.vaccine.availability);
+        }
+        
+        $scope.addVaccine = function () {
+          var err = checkValidVaccine($scope.vaccine);
+          if (err) {
+            $scope.errorAdding = err;
+          } else {
+            $http.post("/iTrust2/api/v1/vaccines", $scope.vaccine).then(
+              function (response) {
+                $scope.loadTable();
+                $scope.vaccine.name = "";
+                $scope.vaccine.minAge = 0;
+                $scope.vaccine.maxAge = 0;
+                $scope.vaccine.numDoses = 0;
+                $scope.vaccine.daysBetweenDoses = 0;
+                $scope.vaccine.isAvailable = false;
+                $scope.vaccine.inventoryAmount = 0;
+                $scope.errorAdding = "";
+              }, function (rejection) {
+                $scope.errorAdding = "Could not add vaccine";
+              });
+          }
+
+        }
+
+        $scope.deleteVaccine = function (vaccine) {
+          $http.delete('/iTrust2/api/v1/vaccines/' + vaccine.id).then(
+            function (response) {
+              $scope.loadTable();
+              $scope.message = "";
+            }, function (rejection) {
+              $scope.message = "Could not remove vaccine";
+            })
+        }
+
+        // gets the template to ng-include for a table row / item
+        $scope.selectedVaccine = {};
+
+        $scope.getTemplate = function (vaccine) {
+          if (vaccine.id === $scope.selectedVaccine.id) return 'edit';
+          else return 'view';
+        };
+
+        $scope.editVaccine = function (vaccine) {
+          $scope.selectedVaccine = angular.copy(vaccine);
+        };
+        
+        $scope.saveVaccine = function () {
+       	  var err = checkValidVaccine($scope.selectedVaccine);
+          if (err) {
+            $scope.errorAdding = err;
+          } else {
+            $http.put("/iTrust2/api/v1/vaccines", $scope.selectedVaccine).then(
+              function (response) {
+                $scope.loadTable();
+                $scope.resetSelected();         
+              }, function (rejection) {
+                $scope.errorAdding = "Failed to edit vaccine";
+              });
+          }
+        };
+
+        $scope.resetSelected = function () {
+          $scope.selectedVaccine = {};
+        };
+
+        $scope.expandButtonExisting = "expand_less";
+		$scope.expandStatusExisting = true;
+		$scope.expandButtonAdd = "expand_more";
+		$scope.expandStatusAdd = false;
+		
+        // load table initially
+        $scope.loadTable();
+      });
+			/*]]>*/
+    </script>
+
+		<div ng-app="vaccinesApp" ng-controller="vaccinesCtrl">
+			<div class="container">
+				<div class="row" style="padding-top: 15px;">
+					<div class="col-md-12">
+						<div class="panel panel-primary">
+							<div class="panel-heading">
+								<h3>Admin Manage Vaccines</h3>
+							</div>
+							<div class="panel-body">
+								<div class="panel panel-default">
+									<div class="panel-heading ">
+										Existing Vaccines
+										<button class="btn btn-xs" style="font-size: 0.1rem" ng-click="expandExisting()"><i class="material-icons">{{expandButtonExisting}}</i></button>
+									</div>
+									<div class="panel-body" ng-show="expandStatusExisting" style="max-height: 400px; overflow:scroll;">
+										<p ng-show="noVaccines">There are no vaccines in the system.</p>
+										<table class="table table-bordered" ng-show="!noVaccines">
+											<thead>
+												<tr>
+													<th>Name</th>
+													<th>Age Range</th>
+													<th>Number of Doses</th>
+													<th>Days Between Doses</th>
+													<th>Availability</th>
+													<th>Amount in Inventory</th>
+													<th>Action</th>
+												</tr>
+											</thead>
+											<tbody>
+												<tr name="vaccineTableRow"
+													ng-repeat="v in vaccines | orderBy: 'name'"
+													ng-include="getTemplate(v)" vaccineId={{v.id}}>
+												</tr>
+											</tbody>
+										</table>
+									</div>
+								</div>
+							
+								<!-- table in view mode -->
+								<script type="text/ng-template" id="view">
+                 					<td name="nameCell">{{v.name}}</td>
+                  					<td name="ageRangeCell">{{v.minAge + " - " + v.maxAge}}</td>
+                  					<td name="numberOfDosesCell">{{v.numDoses}}</td>
+									<td name="daysBetweenDosesCell">{{v.daysBetweenDoses}}</td>
+									<td name="availabilityCell">{{v.isAvailable === true ? "Available" : "Unavailable"}}</td>
+									<td name="amountInInventoryCell">{{v.inventoryAmount}}</td>
+                 					<td>
+                    					<div class="row text-center">
+                      						<div class="col-md-3">
+                        						<input type="button" value="Edit" class="btn btn-primary" name="editVaccine" ng-click="editVaccine(v)" />                         
+                      						</div>
+                      						<div class="col-md-3">
+                          						<input type="button" value="Delete" class="btn btn-danger" name="deleteVaccine" ng-click="deleteVaccine(v)" />                          
+                     						</div>
+                    					</div>
+                  					</td>
+               					 </script>
+
+								<!-- table in edit mode -->
+								<script type="text/ng-template" id="edit">
+                  					<td name="editNameCell">
+                    					<input type="text" class="form-control" ng-model="selectedVaccine.name" />
+                  					</td>
+                 					 <td name="editAgeRangeCell">
+										<label style="font-size: 14px;">Minimum Age</label>
+                    					<input type="number" class="form-control" ng-model="selectedVaccine.minAge" />
+										<label style="font-size: 14px;">Maximum Age</label>
+                    					<input type="number" class="form-control" ng-model="selectedVaccine.maxAge" />
+                  					</td>
+                  					<td name="editNumberOfDosesCell">
+                    					<input type="number" class="form-control" ng-model="selectedVaccine.numDoses" />
+                  					</td>
+                  					<td name="editDaysBetweenDosesCell">
+                    					<input type="number" class="form-control" ng-model="selectedVaccine.daysBetweenDoses" />
+                  					</td>
+                  					<td name="editAvailabilityCell">
+										<div class="form-check">
+											<input class="form-check-input" type="checkbox" ng-model="selectedVaccine.isAvailable" id="availableCheckbox">
+											<label style="font-size: 14px;" class="form-check-label" for="availableCheckbox">Available</label>
+										</div>                  					
+									</td>
+                  					<td name="editAmountInInventoryCell">
+                    					<input type="number" class="form-control" ng-model="selectedVaccine.inventoryAmount" />
+                  					</td>
+                  					<td>
+                    					<div class="row text-center">
+                      						<div class="col-md-3">
+                          						<input type="button"  value="Save" class="btn btn-success" name="saveVaccine" ng-click="saveVaccine()" />                          
+                      						</div>
+                      						<div class="col-md-3" style="margin-left: 5px">
+                          						<input type="button" value="Cancel" class="btn btn-danger" name="cancelEdit" ng-click="resetSelected()" />                            
+                      						</div>
+                    					</div>
+                  					</td>
+               					 </script>
+
+								<br>
+								<div class="row">
+									<div class="col-md-12">
+										<div class="panel panel-default">
+											<div class="panel-heading ">
+												Add a Vaccine
+												<button class="btn btn-xs" style="font-size: 0.1rem" ng-click="expandAdd()"><i class="material-icons">{{expandButtonAdd}}</i></button>
+											</div>
+											<div class="panel-body" ng-show="expandStatusAdd">
+												<form class="form-horizontal" role="form" name="addVaccineForm"
+													ng-submit="addVaccine(addVaccineForm.$valid)">
+													<div class="row">
+														<div class="col-md-4">
+															<label>Name</label> <input type="text"
+																class="form-control" name="vaccine" ng-model="vaccine.name"
+																required />
+														</div>
+														<div class="col-md-4">
+															<label>Minimum Age</label> <input type="number"
+																class="form-control" placeholder="18"
+																name="minAge" ng-model="vaccine.minAge" required />
+														</div>
+														<div class="col-md-4">
+															<label>Maximum Age</label> <input type="number"
+																class="form-control" placeholder="0"
+																name="maxAge" ng-model="vaccine.maxAge" required />
+														</div>
+														<div class="col-md-4">
+															<label>Number of Doses</label>
+															<input class="form-control" type="number"
+																name="numDoses" ng-model="vaccine.numDoses" required
+																placeholder="0"></textarea>
+														</div>
+														<div class="col-md-4">
+															<label>Days Between Doses</label> <input type="number"
+																class="form-control" placeholder="0"
+																name="daysBetweenDoses" ng-model="vaccine.daysBetweenDoses" required />
+														</div>
+														<div class="col-md-4">
+															<label>Amount in Inventory</label> <input type="number"
+																class="form-control" placeholder="0"
+																name="inventoryAmount" ng-model="vaccine.inventoryAmount" required />
+														</div>
+														<div class="col-md-4" style="padding-top: 10px; padding-bottom: 10px;">
+															<div class="form-check">
+																<input class="form-check-input" type="checkbox" name="isAvailable" ng-model="vaccine.isAvailable" id="availableCheckbox">
+																<label class="form-check-label" for="availableCheckbox">Available</label>
+															</div>
+														</div>
+													</div>
+													<div class="row" style="padding-top: 10px;">
+														<div class="col-md-12">
+															<button type="submit" class="btn btn-success"
+																name="submit">Submit</button>
+														</div>
+													</div>
+												</form>
+												<div>
+													<p style="color: red" ng-model="errorAdding" id="errP">{{errorAdding}}</p>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+</body>
+
+</html>
+
+<!-- still here? -->

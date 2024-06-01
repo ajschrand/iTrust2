@@ -1,0 +1,399 @@
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:include="layout :: head(title=~{::title},links=~{})">
+<title>Manage Users</title>
+</head>
+<body th:include="layout :: body" th:with="content=~{::content}">
+	<div th:fragment="content">
+		<script th::inline="javascript">
+			/* Otherwise Thymeleaf tries to parse Javascript as XML and breaks itself sometimes.  Sigh */
+			/*<![CDATA[*/
+			var app = angular.module("manageCPTCodesApp", []);
+			app
+					.controller(
+							"manageCPTCodesCtrl",
+							function($scope, $http) {
+
+								
+								var checkValidCPTCodeForm = function(cptcode) {
+									var err = [];
+
+									for (var i = 0; i < $scope.cptcodes.length; i++) {
+										if ($scope.cptcode.code == $scope.cptcodes[i].code
+												&& $scope.cptcodes[i].isActive) {
+											err.push("Submission unsuccessful: CPT code already exists.");
+										}
+									}
+									var codeStr = $scope.cptcode.code + "";
+									if (codeStr.length != 5) {
+										err.push("Submission unsuccessful: CPT code must be a 5 digit number.");
+									}
+									if ($scope.cptcode.cost <= 0) {
+										err.push("Submission unsuccessful: Invalid price.");
+									}
+									return err.join(".  ");
+								}
+								
+								var checkValideCPTCodeForm = function(ecptcode) {
+									var err = [];
+									if ($scope.ecptcode.cost <= 0) {
+										err.push("Edit unsuccessful: Invalid price.");
+									}
+									return err.join(".  ");
+								}
+								
+								$scope.cptcodes = [];
+								$scope.ecptcodes = [];
+								$scope.activecodes = [];
+								$scope.loadCPTcodes = function() {
+									$http.get("/iTrust2/api/v1/cptcodes").then(
+													function(response) {
+														$scope.cptcodes = response.data;
+														if($scope.cptcodes.length == 0){
+															$scope.generateCPTCodes();
+														}
+														$scope.message = "";
+														$scope.activecodes = [];
+														for (var i = 0; i < $scope.cptcodes.length; i++) {
+															if($scope.cptcodes[i].isActive){
+																$scope.activecodes.push($scope.cptcodes[i]);
+															}
+														}
+													},
+													function(rejection) {
+														$scope.cptcodes = [];
+														$scope.message = "Could not display CPT codes";
+													});
+									
+								}
+
+								$scope.addCPTcode = function() {
+
+									var err = checkValidCPTCodeForm($scope.cptcode);
+									if (err) {
+										$scope.errorAdding = err;
+										$scope.successMessage = "";
+									} else {
+										var form = angular.copy($scope.cptcode);
+										$http.post('/iTrust2/api/v1/cptcode', form).then(
+														function(response) {
+															$scope.resetForm();
+															$scope.successMessage = "CPT code added successfully!";
+														},
+														function(rejection) {
+															$scope.loadCPTcodes();
+															$scope.errorAdding = "Could not add CPT code: " + rejection.data.message;
+															$scope.successMessage = "";
+														});
+									}
+								}
+								
+								$scope.resetForm = function (){
+									$scope.loadCPTcodes();
+									$scope.cptcode.code = "";
+									$scope.cptcode.description = "";
+									$scope.cptcode.cost = "";
+									$scope.errorAdding = "";
+								}
+
+								$scope.deactivateCPTcode = function(id) {
+									$http.delete("/iTrust2/api/v1/cptcode/" + id).then(
+											function(response) {
+												$scope.resetForm();
+												$scope.message = "CPT Code deactivated successfully!"
+											},
+											function(rejection) {
+													$scope.message = "Failed to deactivate CPT code."
+											});
+									
+								}
+								$scope.codeToEdit;
+								$scope.editCPTcode = function() {
+									var eerr = checkValideCPTCodeForm($scope.ecptcode);
+									if (eerr) {
+										$scope.errorEditing = err;
+										$scope.esuccessMessage = "";
+									} else {
+										var form = angular.copy($scope.codeToEdit);
+										form.id = null
+										form.description = $scope.ecptcode.description
+										form.cost = $scope.ecptcode.cost
+										$http.put("/iTrust2/api/v1/cptcode/" + $scope.codeToEdit.id, form).then(
+														function(response) {
+															$scope.loadCPTcodes();
+															$scope.ecptcode = {
+																	"description" : '',
+																	"cost" : 0
+															}
+															$scope.errorAdding = "";
+															$scope.message = "CPT Code edited successfully!"
+														},
+														function(rejection) {
+															$scope.message = "Failed to edit CPT code."
+														});
+									}
+								}
+
+								$scope.getTemplate = function(cptcode) {
+									return 'view';
+								};
+
+								$scope.costText = function(cptcode) {
+									return '$' + cptcode.cost;
+								}
+
+								$scope.activeText = function(cptcode) {
+									if (cptcode.isActive) {
+										return 'yes';
+									} else {
+										return 'no';
+									}
+								}
+								
+								$scope.generateCPTCodes = function() {
+									$scope.cptcode1 = {
+											"code" : 99202,
+											"description" : '15 to 29 minute visit.',
+											"cost" : 75
+									}
+									$scope.cptcode2 = {
+											"code" : 99203,
+											"description" : '30 to 44 minute visit.',
+											"cost" : 150
+									}
+									$scope.cptcode3 = {
+											"code" : 99204,
+											"description" : '45 to 59 minute visit.',
+											"cost" : 200
+									}
+									$scope.cptcode4 = {
+											"code" : 99205,
+											"description" : '60 to 74 minute visit.',
+											"cost" : 250
+									}
+									$scope.cptcode5 = {
+											"code" : 99212,
+											"description" : '10 to 19 minute visit.',
+											"cost" : 50
+									}
+									$scope.cptcode6 = {
+											"code" : 99213,
+											"description" : '20 to 29 minute visit.',
+											"cost" : 100
+									}
+									$scope.cptcode7 = {
+											"code" : 99214,
+											"description" : '30 to 39 minute visit.',
+											"cost" : 125
+									}
+									$scope.cptcode8 = {
+											"code" : 99215,
+											"description" : '40 to 54 minute visit.',
+											"cost" : 175
+									}
+									var form = angular.copy($scope.cptcode1);
+									$http.post('/iTrust2/api/v1/cptcode', form).then(
+													function(response) {
+														
+													},
+													function(rejection) {
+														
+													});
+									var form = angular.copy($scope.cptcode2);
+									$http.post('/iTrust2/api/v1/cptcode', form).then(
+													function(response) {
+														
+													},
+													function(rejection) {
+														
+													});
+									var form = angular.copy($scope.cptcode3);
+									$http.post('/iTrust2/api/v1/cptcode', form).then(
+													function(response) {
+														
+													},
+													function(rejection) {
+														
+													});
+									var form = angular.copy($scope.cptcode4);
+									$http.post('/iTrust2/api/v1/cptcode', form).then(
+													function(response) {
+														
+													},
+													function(rejection) {
+														
+													});
+									var form = angular.copy($scope.cptcode5);
+									$http.post('/iTrust2/api/v1/cptcode', form).then(
+													function(response) {
+														
+													},
+													function(rejection) {
+														
+													});
+									var form = angular.copy($scope.cptcode6);
+									$http.post('/iTrust2/api/v1/cptcode', form).then(
+													function(response) {
+														
+													},
+													function(rejection) {
+														
+													});
+									var form = angular.copy($scope.cptcode7);
+									$http.post('/iTrust2/api/v1/cptcode', form).then(
+													function(response) {
+														
+													},
+													function(rejection) {
+														
+													});
+									var form = angular.copy($scope.cptcode8);
+									$http.post('/iTrust2/api/v1/cptcode', form).then(
+													function(response) {
+														
+													},
+													function(rejection) {
+														
+													});
+									$scope.loadCPTcodes();
+								}
+
+								$scope.loadCPTcodes();
+							});
+		</script>
+		<div ng-app="manageCPTCodesApp" ng-controller="manageCPTCodesCtrl">
+			<br><div class="container">
+				<div class="row">
+					<div class="col-md-12">
+						<div class="panel panel-primary">
+							<div class="panel-heading">
+								<h3>View CPT Codes</h3>
+							</div>
+							<div class="panel-body">
+								<table class="table table-bordered">
+									<thead>
+										<tr>
+											<th>CPT Code</th>
+											<th>Description</th>
+											<th>Cost</th>
+											<th>Version</th>
+											<th>Active</th>
+											<th>Deactivate</th>
+										</tr>
+									</thead>
+									<tbody>
+										<tr name="cptcodeTableRow"
+											ng-repeat="c in cptcodes | orderBy: 'code'"
+											ng-include="getTemplate(c)" cptCodeId={{c.code}}>
+										</tr>
+									</tbody>
+								</table>
+								<script type="text/ng-template" id="view">
+                <td name="codeCell">{{c.code}}</td>
+			    <td name="descriptionCell">{{c.description}}</td>
+				<td name="costCell">{{costText(c)}}</td>
+				<td name="versionCell">{{c.version}}</td>
+				<td name="activeCell">{{activeText(c)}}</td>
+
+                <td> 
+                  <div class="row text-center">
+                    <div class="col-md-6">
+                      <input type="button" value="Deactivate" class="btn btn-danger" name="deactivateCPTcode" ng-click="deactivateCPTcode(c.id)"/>                          
+                    </div>
+                  </div>
+                </td>
+                </script>
+								<br>
+								<style>
+form {
+	width: 400px;
+}
+
+.label {
+	float: right;
+	text-align: left;
+	width: 200px;
+	height: 20px;
+	color: #000000
+}
+
+input[type=text] {
+	float: right;
+	text-align: left;
+	width: 200px;
+	height: 20px
+}
+
+.clear {
+	clear: both;
+	height: 0;
+	line-height: 0;
+}
+
+.floatright {
+	float: right;
+}
+</style>
+
+
+								<div class="row">
+									<div class="col-md-12">
+										<div class="panel panel-default">
+											<div class="panel-heading ">Add a CPT Code</div>
+											<div class="panel-body">
+												<form name="addCPTcodeForm"
+													ng-submit="addCPTcode(addCPTcodeForm.$valid)">
+													<b>CPT Code:</b> <input type="text" name="code" id="code"
+														ng-model="cptcode.code" /> <br> <br> <b>Description:</b>
+													<input type="text" name="description" id="description"
+														ng-model="cptcode.description" /> <br> <br> <b>Cost:</b><input
+														type="text" name="cost" id="cost" ng-model="cptcode.cost" />
+													<br> <br> <input type="submit" id="submit"
+														value="Add CPT Code" />
+												</form>
+												<div>
+													<p style="color: red" ng-model="errorAdding" id="error">{{errorAdding}}</p>
+												</div>
+												<div>
+													<p style="color: green" ng-model="successMessage"
+														id="success">{{successMessage}}</p>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+								<div class="row">
+									<div class="col-md-12">
+										<div class="panel panel-default">
+											<div class="panel-heading ">Edit a CPT Code</div>
+											<div class="panel-body">
+												<form name="editCPTcodeForm"
+													ng-submit="editCPTcode(editCPTcodeForm.$valid)">
+													<select ng-model="codeToEdit"
+														ng-options="item.code for item in activecodes" required="true">
+														<option value="">Select a CPT Code to edit</option>
+													</select><br> <br> <b> New Description:</b><input
+														type="text" name="description" id="description"
+														ng-model="ecptcode.description" /> <br> <br> <b>New
+														Cost:</b><input type="text" name="cost" id="cost"
+														ng-model="ecptcode.cost" /> 
+														<br> <br> <input type="submit" id="submit2" value="Edit CPT Code" />
+												</form>
+												<div>
+													<p style="color: red" ng-model="errorEditing" id="error">{{errorEditing}}</p>
+												</div>
+												<div>
+													<p style="color: green" ng-model="esuccessMessage"
+														id="success">{{esuccessMessage}}</p>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+</body>
+</html>

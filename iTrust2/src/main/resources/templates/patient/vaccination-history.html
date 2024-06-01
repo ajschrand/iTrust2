@@ -1,0 +1,306 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:include="layout :: head(title=~{::title},links=~{})">
+<title>Patient Vaccination History</title>
+
+<!-- Angular and Bootstrap files  -->
+<link rel="stylesheet"
+	href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+<script
+	src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.min.js"></script>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+   
+</head>
+
+<body th:include="layout :: body" th:with="content=~{::content}">
+ 
+	<div th:fragment="content">
+
+		<script th:inline="javascript">
+		/* Otherwise Thymeleaf tries to parse Javascript as XML and breaks itself sometimes.  Sigh */
+		/*<![CDATA[*/
+			var app = angular.module("viewVaccinationHistory", []);
+			app.controller('controller', function($scope, $http) {
+				
+				$scope.showPdf = false;
+				
+				$scope.click = function () {
+					$scope.showPdf = true;
+	                html2canvas(document.getElementById('pdf-content'), {
+	                    onrendered: function (canvas) {
+	                        var data = canvas.toDataURL();
+	                        var docDefinition = {
+	                            content: [{
+	                                image: data,
+	                                width: 500
+	                            }]
+	                        };
+	                        pdfMake.createPdf(docDefinition).download("Vaccination_Certificate.pdf");
+	                    }
+	                });
+	                setTimeout(() => {
+	                	$scope.showPdf = false;
+	                	location.reload();
+	                }, 2000);
+	            }
+				
+				function setShowPDF() {
+					$scope.showPdf = true;
+				}
+			    				
+				$scope.expandRecords = function() {
+					if ($scope.expandButtonRecords === "expand_more") {
+						$scope.expandButtonRecords = "expand_less";
+						$scope.expandStatusRecords = true;
+					} else {
+						$scope.expandButtonRecords = "expand_more";
+						$scope.expandStatusRecords = false;
+					}
+				}
+				
+				$scope.expandVisits = function() {
+					if ($scope.expandButtonVisits === "expand_more") {
+						$scope.expandButtonVisits = "expand_less";
+						$scope.expandStatusVisits = true;
+					} else {
+						$scope.expandButtonVisits = "expand_more";
+						$scope.expandStatusVisits = false;
+					}
+				}
+				
+				$http.get('/iTrust2/api/v1/vaccinationcertificate').then(function(response) {
+					console.log(response.data);
+				    $scope.certificateList= response.data.celist;
+				    $scope.patient = response.data.patient;
+				    console.log($scope.patient);
+				    $scope.getPatientRecords();
+				    $scope.getPatientVisits();
+				}, function(rejection) {
+				    console.err("Could not retrieve expected certificate record");
+				});
+				
+				$scope.getPatientRecords = () => {
+					if ($scope.patient.vaccinationStatus  === "NOT_VACCINATED") {
+						$scope.noVaccinationRecords = true;
+					}  else {
+						$scope.noVaccinationRecords = false;
+					}
+					$scope.vaccinationStatus = "";
+					if ($scope.patient.vaccinationStatus === "FULLY_VACCINATED") {
+						$scope.showRecords = true;
+						$scope.vaccinationStatus = "Fully Vaccinated";
+						$scope.vaccinationRecords = {
+								vaccineType: $scope.patient.vaccineType.name,
+								dosesCompleted: "" + $scope.patient.doses + " of " + $scope.patient.vaccineType.numDoses,
+								vaccinator: $scope.certificateList[0].vaccinator,
+						};
+					} else if ($scope.patient.vaccinationStatus === "FIRST_DOSE") {
+						$scope.showRecords = true;
+						$scope.vaccinationStatus = "Partially Vaccinated";
+						$scope.vaccinationRecords = {
+								vaccineType: $scope.patient.vaccineType.name,
+								dosesCompleted: "" + $scope.patient.doses + " of " + $scope.patient.vaccineType.numDoses,
+								vaccinator: $scope.certificateList[0].vaccinator,
+						};
+					} else {
+						$scope.showRecords = false;
+						$scope.vaccinationStatus = "Unvaccinated";
+					} 
+				}
+				
+				$scope.getCertHTML = () => {
+					
+				}
+				
+				$scope.getPDFName = () => {
+					return "" + $scope.patient.firstName + "_" + $scope.patient.lastName + "_VaccinationCertificate.pdf";
+				}
+				
+				$scope.getPatientVisits = () => {
+					if ($scope.certificateList.length < 1) {
+						$scope.noVaccinationVisits = true;
+					}  else {
+						$scope.noVaccinationVisits = false;
+					}
+					$scope.vaccinationVisits = $scope.certificateList.map((visit) => {
+						var visitObj = {
+							date: $scope.getDate(visit.visit.date),
+							time: $scope.getTime(visit.visit.date),
+							dose: "" + visit.visit.dose + " of " + visit.visit.vaccineType.numDoses,
+							status: "Completed",
+						}
+						return visitObj;
+					});
+				}
+				$scope.getDate = (date) => {
+            		var apptDate = new Date(date);
+            		return apptDate.toDateString();
+            	}
+				
+				$scope.getTime = (date) => {
+            		var apptDate = new Date(date);
+            		return apptDate.toLocaleTimeString('en-US');
+            	}
+				
+				
+				$scope.handleDownload = () => {
+					$scope.generatePDF();
+				}
+				
+				
+				$scope.expandButtonRecords = "expand_more";
+				$scope.expandStatusRecords = false;
+				$scope.expandButtonVisits = "expand_more";
+				$scope.expandStatusVisits = false;
+							
+			});
+		</script>
+
+		<div ng-app="viewVaccinationHistory" ng-controller="controller">
+			<div class="container">
+				<div class="row" style="padding-top: 15px">
+					<div class="col-md-12">
+						<div class="panel panel-default">
+							<div class="panel-heading">
+								<h3>Patient Vaccination History</h3>
+							</div>
+							<div class="panel-body">
+								<div class="row">
+									<div class="col-md-10">
+										<div class="panel panel-default">
+											<div class="panel-heading" style="background-color: rgb(192, 192, 192); border: 3px solid rgb(192, 192, 192); color: rgb(51, 51, 51); font-weight: 300; font-size: 18px">
+												<span style="font-weight: 500">COVID-19 Vaccination Status: </span>
+												{{vaccinationStatus}}
+											</div>
+										</div>
+									</div>
+								</div>
+								
+								<div class="row">
+									<div class="col-md-5">
+										<div class="panel panel-default">
+											<div class="panel-heading ">
+												Vaccination Records
+												<button class="btn btn-xs" style="font-size: 0.1rem" ng-click="expandRecords()"><i class="material-icons">{{expandButtonRecords}}</i></button>
+											</div>
+											<div class="panel-body" ng-show="expandStatusRecords">
+												<p ng-show="noVaccinationRecords">No Vaccination Records Found in the System.</p>
+												<table class="table table-bordered" ng-show="!noVaccinationRecords">
+													<tr>
+														<th style="background-color: #363636; color: white; font-weight: 300; width: 200px;">Vaccine Type</th>
+														<td>{{vaccinationRecords.vaccineType}}</td>
+													</tr>
+													<tr>
+														<th style="background-color: #363636; color: white; font-weight: 300; width: 200px;">Doses Completed</th>
+														<td>{{vaccinationRecords.dosesCompleted}}</td>
+													</tr>
+													<tr>
+														<th style="background-color: #363636; color: white; font-weight: 300; width: 200px;">Vaccinator</th>
+														<td>{{vaccinationRecords.vaccinator}}</td>
+													</tr>
+												</table>
+											</div>
+										</div>
+									</div>
+									<div class="col-md-5">
+										<div class="panel panel-default" id="export">
+											<div class="panel-heading ">
+												Vaccination Visits
+												<button class="btn btn-xs" style="font-size: 0.1rem" ng-click="expandVisits()"><i class="material-icons">{{expandButtonVisits}}</i></button>
+											</div>
+											<div class="panel-body" ng-show="expandStatusVisits">
+												<p ng-show="noVaccinationVisits">No Vaccination Visits Found in the System.</p>
+												<table class="table table-bordered" ng-show="!noVaccinationVisits">
+													<tr style="background-color: #363636; color: white; font-weight: 300;">
+														<td>Date</td>
+														<td>Time</td>
+														<td>Dose</td>
+														<td>Status</td>
+													</tr>
+													<tr ng-repeat="v in vaccinationVisits">
+														<td>{{v.date}}</td>
+														<td>{{v.time}}</td>
+														<td>{{v.dose}}</td>
+														<td>{{v.status}}</td>
+													</tr>
+												</table>
+											</div>
+										</div>
+									</div>
+								</div>
+								<br />
+								<div class="row">
+									<button class="btn btn-lg" style="margin-left: 15px; font-size: 15px; background-color: #363636; color: white; font-weight: 300;" ng-click="click()">
+										Download Vaccination Certificate
+									</button>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div id="pdf-content" ng-show="showPdf">
+					<div class="panel panel-default">
+						<div class="panel-heading">
+							<h3>iTrust2 Patient Vaccination Certificate</h3>
+						</div>
+						<div class="panel-body">
+							<p>This document contains sensitive information that is intended only for the named individual. Unauthorized copying, disclosure, or distribution of the contents is strictly prohibited.</p>
+						</div>
+					</div>
+					<div class="panel panel-default">
+						<div class="panel-body">
+							<h5>Name: {{patient.firstName}} {{patient.lastName}}</h5>
+							<h5>Date of Birth: {{patient.dateOfBirth}}</h5>
+							<h5>ID: {{patient.id}}</h5>
+							<h5>COVID-19 Vaccination Status: {{vaccinationStatus}}</h5>
+						</div>
+					</div>
+					<div class="panel panel-default">
+						<div class="panel-heading ">
+							Vaccination Records
+						</div>
+						<div class="panel-body">
+							<p ng-show="noVaccinationRecords">No Vaccination Records Found in the System.</p>
+							<table class="table table-bordered" ng-show="!noVaccinationRecords">
+								<tr>
+									<th style="background-color: #363636; color: white; font-weight: 300; width: 200px;">Vaccine Type</th>
+									<td>{{vaccinationRecords.vaccineType}}</td>
+								</tr>
+								<tr>
+									<th style="background-color: #363636; color: white; font-weight: 300; width: 200px;">Doses Completed</th>
+									<td>{{vaccinationRecords.dosesCompleted}}</td>
+								</tr>
+								<tr>
+									<th style="background-color: #363636; color: white; font-weight: 300; width: 200px;">Vaccinator</th>
+									<td>{{vaccinationRecords.vaccinator}}</td>
+								</tr>
+							</table>
+						</div>
+					</div>
+					<br />
+					<div class="panel panel-default" id="export">
+						<div class="panel-heading ">
+							Vaccination Visits
+						</div>
+						<div class="panel-body">
+							<p ng-show="noVaccinationVisits">No Vaccination Visits Found in the System.</p>
+								<table class="table table-bordered" ng-show="!noVaccinationVisits">
+									<tr style="background-color: #363636; color: white; font-weight: 300;">
+										<td>Date</td>
+										<td>Time</td>
+										<td>Dose</td>
+										<td>Status</td>
+									</tr>
+									<tr ng-repeat="v in vaccinationVisits">
+										<td>{{v.date}}</td>
+										<td>{{v.time}}</td>
+										<td>{{v.dose}}</td>
+										<td>{{v.status}}</td>
+									</tr>
+								</table>
+							</div>
+						</div>
+					</div>
+</body>
+</html>

@@ -1,0 +1,782 @@
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:include="layout :: head(title=~{::title},links=~{::script})">
+<title>View Office Visits</title>
+	<script th:src="@{/js/dateTimeService.js}"
+			src="../../../js/dateTimeService.js"></script>
+	<script th:src="@{/js/jk-rating-stars.js}"
+			src="../../../js/jk-rating-stars.js"></script>
+
+</head>
+
+<body th:include="layout :: body" th:with="content=~{::content}">
+	<div th:fragment="content">
+
+
+		<script th:inline="javascript">
+      /* Otherwise Thymeleaf tries to parse Javascript as XML and breaks itself sometimes.  Sigh */
+      /*<![CDATA[*/
+      var app = angular.module("viewOfficeVisitsApp", ['dateTimeServices', 'jkAngularRatingStars']);
+
+	  /**
+	   * A filter to humanize the text to be more user friendly.
+	   */
+	  app.filter('humanize', function() {
+		  return function (input) {
+
+			  if (input == null || input == "") {
+			  	return "";
+			  }
+
+			  return input.toLowerCase().split('_')
+					  .map((word) => word.charAt(0).toUpperCase() + word.substring(1))
+					  .join(' ');
+		  }
+	  });
+
+      app.controller('viewOfficeVisitsCtrl', function ($scope, $http, dateTimeService) {
+        $scope.visits = [];
+        $scope.loadTable = function () {
+          $http.get("/iTrust2/api/v1/officevisits/myofficevisits").then(
+            function (response) {
+              $scope.visits = response.data;
+              $scope.errorMsg = "";
+            }, function (rejection) {
+              $scope.visits = [];
+              $scope.errorMsg = "Could not display office visits.";
+            });
+        }
+        $scope.loadTable();
+
+        $scope.visit = null;
+        $scope.selectVisit = function (visit) {
+        	
+            // Stop displaying previous panels
+            $scope.display = false;
+            $scope.displaySurvey = false;
+        	
+            $scope.visit = visit;
+
+			const age = dateTimeService.getAge(new Date(visit.patient.dateOfBirth), new Date(visit.date));
+			if (age < 3) {
+				$scope.three = true;
+			}
+			if (age >= 3) {
+				$scope.threeAndUp = true;
+			}
+			if (age >= 12) {
+				$scope.twelveAndUp = true;
+			}
+
+		}
+
+        // View the visit that was selected in the table
+		  $scope.viewSelectedVisit = function() {
+			  // Get the selected visit from the api.
+			  // The id of the selected visit is $scope.selectedOfficeVisit
+			  // Once you get the details of the visit, store it in $scope.visit
+			  $scope.display = true;
+			  $scope.displaySurvey = false;
+		  }
+
+		  $scope.showSurvey = function() {
+			  $scope.displaySurvey = true;
+			  $scope.display = false;
+			  $scope.surveyForm = {
+			  	'officeVisitId': $scope.visit.id,
+			  	'visitSatisfaction': 1,
+			    'treatmentSatisfaction': 1
+			  };
+			  
+			  if($scope.visit && $scope.visit.satisfactionSurvey) {
+				  $scope.surveyForm.waitingRoomTime = $scope.visit.satisfactionSurvey.waitingRoomTime;
+				  $scope.surveyForm.comments = $scope.visit.satisfactionSurvey.comments;
+				  $scope.surveyForm.examinationResponseTime = $scope.visit.satisfactionSurvey.examinationResponseTime
+			  }
+		  }
+
+		  /*Submit function*/
+		  $scope.submitSurvey = function () {
+			  $scope.errorMsg = "";
+			  $scope.message = "";
+
+			  $http({
+				  method: 'POST',
+				  url: '/iTrust2/api/v1/surveys',
+				  data: $scope.surveyForm
+			  }).then(function (response) {
+				  $scope.errorMsg = "";
+				  $scope.message = "Survey submitted successfully";
+				  $scope.visit.satisfactionSurvey = response.data;
+			  }, function (rejection) {
+				  $scope.message = "";
+				  $scope.errorMsg = "Error occurred creating submitting survey: " + rejection.data.message;
+			  })
+
+		  };
+
+	  });
+			/*]]>*/
+    </script>
+
+		<div ng-app="viewOfficeVisitsApp" ng-controller="viewOfficeVisitsCtrl">
+			<div class="container">
+				<div class="row">
+					<div class="col-md-12">
+						<div class="panel panel-primary">
+							<div class="panel-heading">
+								<h3>View Past Office Visits</h3>
+							</div>
+							<div class="panel-body">
+								<table class="table table-bordered">
+																			
+									<caption>Documented Office Visits:</caption>
+									
+									<thead>
+										<tr>
+											<th> </th>
+											<th>Date</th>
+											<th>Provider</th>
+											<th>Location</th>
+											<th>Survey</th>
+										</tr>
+									</thead>
+									<tbody>
+										<tr name="officeVisitsTableRow"
+											ng-repeat="v in visits | orderBy: '-date'"
+											visitId={{v.id}}>
+											<td name="selectCell"><input type="radio" name="selectRow" ng-model="$parent.selectedOfficeVisit" ng-value="v.id" ng-click="selectVisit(v)"></td>
+											<td name="dateCell">{{v.date | date :
+												'MM/dd/yyyy'}}</td>
+											<td name="providerCell">{{v.hcp.username}}</td>
+											<td name="locationCell">{{v.hospital.name}}</td>
+											<td name="surveyCell" ng-if="v.satisfactionSurvey"><jk-rating-stars rating="v.satisfactionSurvey.visitSatisfaction" read-only="true"></jk-rating-stars></td>
+											<td name="surveyCell" ng-if="!v.satisfactionSurvey">[Pending]</td>
+										</tr>
+									</tbody>
+								</table>
+								
+								<!-- Error Messages -->
+								<div class="row">
+
+									<div class="col-md-12 text-right">
+										<div style="white-space: pre-line;">
+											<div name="errorMsg" class="text-danger">{{errorMsg}}</div>
+										</div>
+									</div>
+								</div>
+								
+							</div>
+							
+							<div class="panel-footer text-right">
+								<!-- button may have to be inside form tag, or just a submit function for the form? -->
+								<button class="btn btn-lg" ng-click="showSurvey()"
+									name="showSurvey" ng-disabled="!visit" ng-show="visit && !visit.satisfactionSurvey">Fill Survey</button>
+								<button class="btn btn-lg" ng-click="showSurvey()"
+									name="showSurvey" ng-show="visit && visit.satisfactionSurvey">View Survey</button>
+								<button class="btn btn-primary btn-lg" ng-click="viewSelectedVisit()"
+									name="viewVisit" ng-disabled="!visit">View Details</button>
+							</div>
+							
+						</div>
+						
+						
+						<!-- Display the information about the selected visit -->
+						<div class='panel panel-default' ng-if="visit && (display || displaySurvey)">
+
+							<!-- Show correct heading based on what button was pressed -->
+							<div class="panel-heading" ng-show="display">
+								<h3>Selected Visit Details</h3>
+							</div>
+							
+							<div class="panel-heading" ng-show="displaySurvey">
+								<h3>Satisfaction Survey</h3>
+							</div>
+							
+							<div class='panel-body'>
+
+								<div class="row">
+									<div class="form-group col-md-2">
+										<label for="date">Date:</label> <input id="date" type="text"
+											class="form-control" value="{{visit.date  | date :
+													'MM/dd/yyyy'}}" name="date" disabled />
+									</div>
+		
+									<div class="form-group col-md-2">
+										<label for="time">Time:</label> <input id="time" type="time"
+											name="time" class="form-control" value="{{visit.date  | date :
+													'HH:mm'}}" disabled/>
+									</div>
+									<div class="form-group col-md-2">
+										<label>Provider:</label> <input type="text"
+											name="provider" class="form-control" value="{{visit.hcp.username}}" disabled/>
+									</div>
+									<div class="form-group col-md-2 text-right">
+										<div class="checkbox">
+											<label> <input type="checkbox" name="preScheduled"
+												class="checkbox" ng-model="visit.prescheduled" disabled>Prescheduled?
+											</label>
+										</div>
+									</div>
+								</div>
+								<div class="row">
+									<div class="form-group col-md-4">
+										<label>Type of Visit:</label>
+		
+										<div class="panel panel-default">
+											<div class="panel-body">
+												<div class="form-check">
+													<ul
+														style="max-height: 15%; overflow: auto; list-style: none;">
+														<li>{{visit.type | humanize}}</li>
+													</ul>
+												</div>
+											</div>
+										</div>
+									</div>
+									<div class="form-group col-md-4">
+										<label>Hospital:</label>
+										<div class="panel panel-default">
+											<div class="panel-body">
+												<div class="form-check">
+													<ul
+														style="max-height: 15%; overflow: auto; list-style: none;">
+														<li>{{visit.hospital.name | humanize}}</li>
+													</ul>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+	
+								<div ng-if="display" class="row">
+		
+									<!-- Basic Health Metrics Panel -->
+									<div class="col-md-4">
+										<div class="panel panel-info">
+											<div class="panel-heading">
+												<h4>Basic Health Metrics</h4>
+											</div>
+											<div class="panel-body">
+												<div class="form-group row">
+													<div class="col-xs-6">
+														<label>Height/Length:</label>
+													</div>
+													<div class="col-xs-6">
+														<input class="form-control" name="height"
+															ng-model="visit.basicHealthMetrics.height" required="true" type="text" disabled>
+													</div>
+												</div>
+												<div class="form-group row">
+													<div class="col-xs-6">
+														<label>Weight:</label>
+													</div>
+													<div class="col-xs-6">
+														<input class="form-control" name="weight"
+															ng-model="visit.basicHealthMetrics.weight" required="true" type="text" disabled>
+													</div>
+												</div>
+												<div class="form-group row" ng-show="three">
+													<div class="col-xs-6">
+														<label>Head Circumference:</label>
+													</div>
+													<div class="col-xs-6">
+														<input class="form-control" name="head"
+															ng-model="visit.basicHealthMetrics.headCircumference" required="true"
+															type="text" disabled>
+													</div>
+												</div>
+												<div class="form-group row" ng-show="threeAndUp">
+													<div class="col-xs-6">
+														<label>Systolic:</label>
+													</div>
+													<div class="col-xs-6">
+														<input class="form-control" name="systolic"
+															ng-model="visit.basicHealthMetrics.systolic" required="true" type="text" disabled>
+													</div>
+												</div>
+												<div class="form-group row" ng-show="threeAndUp">
+													<div class="col-xs-6">
+														<label>Diastolic:</label>
+													</div>
+													<div class="col-xs-6">
+														<input class="form-control" name="diastolic"
+															ng-model="visit.basicHealthMetrics.diastolic" required="true" type="text" disabled>
+													</div>
+												</div>
+												<div class="form-group row" ng-show="twelveAndUp">
+													<div class="col-xs-6">
+														<label>HDL:</label>
+													</div>
+													<div class="col-xs-6">
+														<input class="form-control" name="hdl"
+															ng-model="visit.basicHealthMetrics.hdl" required="true" type="text" disabled>
+													</div>
+												</div>
+												<div class="form-group row" ng-show="twelveAndUp">
+													<div class="col-xs-6">
+														<label>LDL:</label>
+													</div>
+													<div class="col-xs-6">
+														<input class="form-control" name="ldl"
+															ng-model="visit.basicHealthMetrics.ldl" required="true" type="text" disabled>
+													</div>
+												</div>
+												<div class="form-group row" ng-show="twelveAndUp">
+													<div class="col-xs-6">
+														<label>Triglycerides:</label>
+													</div>
+													<div class="col-xs-6">
+														<input class="form-control" name="tri"
+															ng-model="visit.basicHealthMetrics.tri" required="true" type="text" disabled>
+													</div>
+												</div>
+												<div class="form-group row">
+													<div class="col-xs-6">
+														<label>Household Smoking Status:</label>
+													</div>
+													<div class="col-xs-6 radio-box">
+														<div class="form-check">
+															<ul style="list-style: none;">
+																<li>{{visit.basicHealthMetrics.houseSmokingStatus | humanize }}</li>
+															</ul>
+														</div>
+													</div>
+												</div>
+												<div class="form-group row" ng-show="twelveAndUp">
+													<div class="col-xs-6">
+														<label>Patient Smoking Status:</label>
+													</div>
+													<div class="col-xs-6 radio-box">
+														<div class="form-check">
+															<ul style="list-style: none;">
+																<li>{{visit.basicHealthMetrics.patientSmokingStatus | humanize }}</li>
+															</ul>
+														</div>
+													</div>
+												</div>
+											</div>
+										</div>
+									</div>
+	
+									<!-- Ophthalmology-only: Eye Metrics panel -->
+									<div ng-show="visit.type == 'GENERAL_OPHTHALMOLOGY'" class="col-md-4">
+										<div class="panel panel-info">
+											<div class="panel-heading">
+												<h4>Eye Metrics</h4>
+											</div>
+											<div class="panel-body">
+												<div class="form-group row">
+													<div class="col-xs-6">
+														<label>Acuity (L):</label>
+													</div>
+													<div class="col-xs-6">
+														<input class="form-control" name="visualAcuityLeft"
+															   ng-model="visit.ophthalmologyMetrics.visualAcuityLeft" required="true" type="text" disabled>
+													</div>
+												</div>
+												<div class="form-group row">
+													<div class="col-xs-6">
+														<label>Acuity (R):</label>
+													</div>
+													<div class="col-xs-6">
+														<input class="form-control" name="visualAcuityRight"
+															   ng-model="visit.ophthalmologyMetrics.visualAcuityRight" required="true" type="text" disabled>
+													</div>
+												</div>
+												<div class="form-group row">
+													<div class="col-xs-6">
+														<label>Sphere (L):</label>
+													</div>
+													<div class="col-xs-6">
+														<input class="form-control" name="sphereLeft"
+															   ng-model="visit.ophthalmologyMetrics.sphereLeft" required="true"
+															   type="text" disabled>
+													</div>
+												</div>
+												<div class="form-group row">
+													<div class="col-xs-6">
+														<label>Sphere (R):</label>
+													</div>
+													<div class="col-xs-6">
+														<input class="form-control" name="sphereRight"
+															   ng-model="visit.ophthalmologyMetrics.sphereRight" required="true" type="text" disabled>
+													</div>
+												</div>
+												<div class="form-group row">
+													<div class="col-xs-6">
+														<label>Cylinder (L):</label>
+													</div>
+													<div class="col-xs-6">
+														<input class="form-control" name="cylinderLeft"
+															   ng-model="visit.ophthalmologyMetrics.cylinderLeft" required="true" type="text" disabled>
+													</div>
+												</div>
+												<div class="form-group row">
+													<div class="col-xs-6">
+														<label>Cylinder (R):</label>
+													</div>
+													<div class="col-xs-6">
+														<input class="form-control" name="cylinderRight"
+															   ng-model="visit.ophthalmologyMetrics.cylinderRight" required="true" type="text" disabled>
+													</div>
+												</div>
+												<div class="form-group row">
+													<div class="col-xs-6">
+														<label>Axis (L):</label>
+													</div>
+													<div class="col-xs-6">
+														<input class="form-control" name="axisLeft"
+															   ng-model="visit.ophthalmologyMetrics.axisLeft" required="true" type="text" disabled>
+													</div>
+												</div>
+												<div class="form-group row">
+													<div class="col-xs-6">
+														<label>Axis (R):</label>
+													</div>
+													<div class="col-xs-6">
+														<input class="form-control" name="axisRight"
+															   ng-model="visit.ophthalmologyMetrics.axisRight" required="true" type="text" disabled>
+													</div>
+												</div>
+	
+											</div>
+										</div>
+									</div>
+	
+									<!-- Diagnosis Panel  -->
+									<div ng-show="visit.type == 'GENERAL_CHECKUP' || visit.type == 'GENERAL_OPHTHALMOLOGY'" class="col-md-4">
+										<div class="panel panel-info">
+											<div class="panel-heading">
+												<h4>Diagnosis</h4>
+											</div>
+											<div class="panel-body">
+												<div class="form-group row" ng-repeat="diagnostic in visit.diagnoses">
+													<div class="col-xs-12 radio-box">
+														<div class="form-check">
+															<ul>
+																<li>{{diagnostic.code.code}} - {{diagnostic.code.description}} - {{diagnostic.note}}</li>
+															</ul>
+														</div>
+													</div>
+												</div>
+											</div>
+										</div>
+									</div>
+		
+		
+									<!-- Prescription Panel -->
+									<div ng-show="visit.type == 'GENERAL_CHECKUP'" class="col-md-4">
+										<div class="panel panel-info">
+											<div class="panel-heading">
+												<h4>Prescription</h4>
+											</div>
+											<div class="panel-body">
+												<div class="form-group row">
+													<div class="col-xs-6">
+														<label>Drug:</label>
+													</div>
+													<div class="col-xs-6 radio-box">
+														<div class="form-check">
+															<ul style="list-style: none;">
+																<li ng-repeat="d in drugs"><label> <input
+																		type="radio" ng-model="$parent.drugEntry"
+																		name="{{d.name}}" value="{{d.code}}" required="true" />
+																		{{d.name}}
+																</label></li>
+															</ul>
+														</div>
+													</div>
+												</div>
+												<div class="form-group row">
+													<div class="col-xs-6">
+														<label>Dosage:</label>
+													</div>
+													<div class="col-xs-4">
+														<input class="form-control" name="dosageEntry"
+															ng-model="dosageEntry" required></input>
+													</div>
+													<div class="col-xs-2">
+														<span id="helpBlock" class="help-block">mg</span>
+													</div>
+												</div>
+												<div class="form-group row">
+													<div class="col-xs-6">
+														<label>Start Date:</label>
+													</div>
+													<div class="col-xs-6">
+														<input type="date" class="form-control" name="startEntry"
+															ng-model="startEntry" required />
+													</div>
+												</div>
+												<div class="form-group row">
+													<div class="col-xs-6">
+														<label>End Date:</label>
+													</div>
+													<div class="col-xs-6">
+														<input type="date" class="form-control" name="endEntry"
+															ng-model="endEntry" required />
+													</div>
+												</div>
+												<div class="form-group row">
+													<div class="col-xs-6">
+														<label>Renewals:</label>
+													</div>
+													<div class="col-xs-4">
+														<input class="form-control" name="renewalEntry"
+															ng-model="renewalEntry" required></input>
+													</div>
+												</div>
+												<div class="form-group row text-center">
+													<button class="btn btn-success"
+														ng-click="fillPrescription()" name="fillPrescription">Add
+														Prescription</button>
+												</div>
+												<div class="form-group row">
+													<div class="col-md-12">
+														<div class="panel panel-default">
+															<div class="panel-heading">Added Prescriptions</div>
+															<div class="panel-body">
+																<div class="row" ng-repeat="p in prescriptions">
+																	<div class="col-md-3">{{p.drug}}</div>
+																	<div class="col-md-2">{{p.dosage}}mg</div>
+																	<br>
+																	<div class="col-md-1"></div>
+																	<!-- "tab" over columns -->
+																	<div class="col-md-3">{{p.startDate | date :
+																		'MM/dd/yyyy'}}</div>
+																	<div class="col-md-3">{{p.endDate | date :
+																		'MM/dd/yyyy'}}</div>
+																	<div class="col-md-3">{{p.renewals}}</div>
+																	<div class="col-md-1">
+																		<button class="btn btn-danger btn-xs"
+																			ng-click="removePrescription($index)"
+																			name="removePrescription">
+																			<b>x</b>
+																		</button>
+																	</div>
+																</div>
+															</div>
+														</div>
+													</div>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+								
+								<!-- Lab Procedures Panel -->
+								<div ng-if="display" ng-show="visit.type == 'GENERAL_CHECKUP'" class="row">
+									<div class="col-md-4">
+										<div class="panel panel-info">
+											<div class="panel-heading">
+												<h4>Lab Procedures</h4>
+											</div>
+											<div class="panel-body">
+												<div class="form-group row">
+													<div class="col-xs-6">
+														<label>Procedure Code:</label>
+													</div>
+													<div class="col-xs-6">
+														<ul>
+															<li ng-repeat="l in loinccodes"><label> <input
+																	type="radio" ng-model="procedure.loinc"
+																	name="{{l.commonName}}" ng-value="l" value="{{l.code}}"
+																	required="true" /> {{l.commonName}}
+															</label></li>
+														</ul>
+													</div>
+												</div>
+												<div class="form-group row">
+													<div class="col-xs-6">
+														<label>Priority:</label>
+													</div>
+													<div class="col-xs-6">
+														<select name="priority" ng-model="procedure.priority"
+															required="true">
+															<option value="CRITICAL">Critical</option>
+															<option value="HIGH">High</option>
+															<option value="MEDIUM">Medium</option>
+															<option value="LOW">Low</option>
+														</select>
+													</div>
+												</div>
+												<!-- List of Lab Techs -->
+												<div class="form-group row">
+													<div class="col-xs-6">
+														<label>Lab Techs:</label>
+													</div>
+													<div class="col-xs-6 radio-box">
+														<div class="form-check">
+															<ul style="list-style: none;">
+																<li ng-repeat="t in tech"><label> <input
+																		type="radio" ng-model="procedure.labtech"
+																		name="{{t.self.username}}" ng-value="t.self"
+																		value="{{t.self.username}}" required="true"
+																		id="radio-{{t.self.username}}" /> {{t.self.username}}
+																		({{t.numAssigned}} assigned)
+																</label></li>
+															</ul>
+														</div>
+													</div>
+												</div>
+												<!-- Comments for lab procedure -->
+												<div class="form-group row">
+													<div class="col-xs-6">
+														<label>Notes:</label>
+														<textarea name="procNotes" ng-model="procedure.comments"
+															class="form-control" rows="3"></textarea>
+		
+													</div>
+												</div>
+												<!-- Add procedure button -->
+												<div class="form-group row text-center">
+													<button class="btn btn-success" ng-click="addProcedure()"
+														name="addProcedure">Add Procedure</button>
+												</div>
+		
+												<!-- Currently added procedures -->
+												<div class="form-group row">
+													<div class="col-md-12">
+														<div class="panel panel-default">
+															<div class="panel-heading">Added Procedures</div>
+															<div class="panel-body">
+																<div class="row" ng-repeat="p in procedures">
+																	<div>
+																		<b>Code:</b> {{p.loinc.code}} <br> 
+																		<b>Common Name:</b> {{p.loinc.commonName}} <br>
+																		<b>Priority:</b> {{p.priority}} <br>
+																		<b>Status:</b> {{p.status}} <br>
+																		<b>Comments:</b> {{p.comments}} <br>
+																	</div>
+																	<br>
+																</div>
+															</div>
+														</div>
+													</div>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+	
+								<!-- Notes -->
+								<div ng-if="display" class="row">
+									<div class="form-group col-md-6">
+										<label>Notes:</label>
+										<textarea name="notes" ng-model="visit.notes"
+												  class="form-control" rows="3" disabled></textarea>
+									</div>
+								</div>
+								
+								
+								<!-- Satisfaction surveys -->
+								<div ng-if="displaySurvey" class="row">
+
+									<div class="form-group col-md-8">
+										<label>Wait Times:</label>
+	
+										<div class="panel panel-default">
+	
+	
+											<div class="panel-body">
+												<div class="form-check">
+													Please let us know how long you waited in waiting room:
+													<br/>
+													<select name="waitingRoomTime" ng-model="surveyForm.waitingRoomTime"
+															required="true" ng-disabled="visit && visit.satisfactionSurvey">
+														<option value="LESS_THAN_FIVE">Less than 5 minutes</option>
+														<option value="FIVE_TO_TEN">5-10 minutes</option>
+														<option value="TEN_TO_FIFTEEN">10-15 minutes</option>
+														<option value="FIFTEEN_TO_TWENTY">15-20 minutes</option>
+														<option value="TWENTY_TO_TWENTY_FIVE">20-25 minutes</option>
+														<option value="OVER_TWENTY_FIVE">Over 25 minutes</option>
+													</select>
+												</div>
+	
+											</div>
+	
+											<div class="panel-body">
+												<div class="form-check">
+													Please let us know how long you waited for your provider to enter the examination room:
+													<br/>
+													<select name="examinationResponseTime" ng-model="surveyForm.examinationResponseTime"
+															required="true" ng-disabled="visit && visit.satisfactionSurvey">
+														<option value="LESS_THAN_FIVE">Less than 5 minutes</option>
+														<option value="FIVE_TO_TEN">5-10 minutes</option>
+														<option value="TEN_TO_FIFTEEN">10-15 minutes</option>
+														<option value="FIFTEEN_TO_TWENTY">15-20 minutes</option>
+														<option value="TWENTY_TO_TWENTY_FIVE">20-25 minutes</option>
+														<option value="OVER_TWENTY_FIVE">Over 25 minutes</option>
+													</select>
+	
+												</div>
+											</div>
+	
+										</div>
+									</div>
+	
+								</div>
+	
+								<div ng-if="displaySurvey" class="row">
+	
+									<div class="form-group col-md-8">
+										<label>Rating:</label>
+	
+										<div class="panel panel-default">
+	
+	
+											<div class="panel-body">
+												<div class="form-check">
+													How satisfied were you with your office visit with {{visit.hcp.lastName == null ? visit.hcp.username : 'Dr. ' + visit.hcp.firstName + ' ' + visit.hcp.lastName}}? Select a rating from 1 to 5.
+													<jk-rating-stars ng-if="!visit.satisfactionSurvey" rating="surveyForm.visitSatisfaction" ></jk-rating-stars>
+													<jk-rating-stars ng-if="visit.satisfactionSurvey" rating="visit.satisfactionSurvey.visitSatisfaction" read-only="true"></jk-rating-stars>
+													<input type="text" style="opacity: 0" ng-if="!visit.satisfactionSurvey" id="fillVisitSatisfaction" name="fillVisitSatisfaction" ng-model="surveyForm.visitSatisfaction"/>
+													<input type="text" style="opacity: 0" ng-if="visit.satisfactionSurvey" id="viewVisitSatisfaction" name="viewVisitSatisfaction" ng-model="visit.satisfactionSurvey.visitSatisfaction"/>
+												</div>
+											</div>
+	
+											<div class="panel-body">
+												<div class="form-check">
+													How satisfied were you with the treatment provided by {{visit.hcp.lastName == null ? visit.hcp.username : 'Dr. ' + visit.hcp.firstName + ' ' + visit.hcp.lastName}}? Select a rating from 1 to 5.
+													<jk-rating-stars ng-if="!visit.satisfactionSurvey" rating="surveyForm.treatmentSatisfaction" ></jk-rating-stars>
+													<jk-rating-stars ng-if="visit.satisfactionSurvey" rating="visit.satisfactionSurvey.treatmentSatisfaction" read-only="true"></jk-rating-stars>
+													<input type="text" style="opacity: 0" ng-if="!visit.satisfactionSurvey" id="fillTreatmentSatisfaction" name="fillTreatmentSatisfaction" ng-model="surveyForm.treatmentSatisfaction"/>
+													<input type="text" style="opacity: 0" ng-if="visit.satisfactionSurvey" id="viewTreatmentSatisfaction" name="viewTreatmentSatisfaction" ng-model="visit.satisfactionSurvey.treatmentSatisfaction"/>
+												</div>
+											</div>
+	
+										</div>
+									</div>
+	
+								</div>
+								<div ng-if="displaySurvey" class="row">
+									<div class="form-group col-md-6">
+										<label>Comments:</label>
+										<textarea name="comments" ng-model="surveyForm.comments"
+												  class="form-control" rows="3" ng-disabled="visit && visit.satisfactionSurvey"></textarea>
+									</div>
+								</div>
+
+								<div ng-if="displaySurvey" class="col-md-12 text-right">
+									<div style="white-space: pre-line;">
+										<div name="success" class="text-success">{{message}}</div>
+										<div name="errorMsg" class="text-danger">{{errorMsg}}</div>
+									</div>
+								</div>
+
+								<div ng-if="displaySurvey" class="panel-footer text-right">
+									<!-- button may have to be inside form tag, or just a submit function for the form? -->
+									<button class="btn btn-primary btn-lg" ng-click="submitSurvey()"
+											name="submit" ng-hide="visit && visit.satisfactionSurvey">Submit Survey</button>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</body>
+
+</html>

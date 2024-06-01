@@ -1,0 +1,174 @@
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+
+<head th:include="layout :: head(title=~{::title},links=~{})">
+    <title>Admin Associations</title>
+    <link rel="stylesheet"
+          href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.css">
+    <script
+            src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.js"></script>
+
+    <style>
+        .flex-container {
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+
+<body th:include="layout :: body" th:with="content=~{::content}">
+<div th:fragment="content">
+    <script th:inline="javascript">
+        /* Otherwise Thymeleaf tries to parse Javascript as XML and breaks itself sometimes.  Sigh */
+        /*<![CDATA[*/
+        let app = angular.module("associationsApp", []);
+        app.controller('associationsCtrl', function ($scope, $http) {
+
+            $scope.noAssociationsMessage = "";
+
+            $scope.successAdding = "";
+            $scope.errorAdding = "";
+            $scope.successUpdating = "";
+            $scope.errorUpdating = "";
+
+            $scope.successDeleting = "";
+            $scope.errorDeleting = "";
+
+            $scope.loadSelectedPatientsAssociations = function () {
+                $scope.selectedPatientsAssociations = [];
+
+                $http.get("/iTrust2/api/v1/patientAdvocateAssociations/currentPatientAssociations").then(
+                    function (response) {
+                        $scope.message = "Found association";
+                        $scope.selectedPatientsAssociations = response.data;
+                        $scope.checkForNoAssociations();
+                    }, function (rejection) {
+                        $scope.message = "Error when loading association";
+                        $scope.selectedPatientsAssociations = [];
+                        $scope.checkForNoAssociations();
+                    });
+            }
+
+            $scope.editAssociation = function (association) {
+                $scope.resetSuccessErrorMessages();
+
+                let patientAdvocateAssociationForm = {
+                    "patient" : association.patient,
+                    "patientAdvocate" : association.patientAdvocate,
+                    "prescription" : association.prescription,
+                    "billing" : association.billing,
+                    "visit" : association.visit
+                }
+
+                $http.put("/iTrust2/api/v1/patientAdvocateAssociations/" + association.id, 
+                		patientAdvocateAssociationForm).then(
+                    function (response) {
+                        $scope.successUpdating = "Association edited successfully";
+                        $scope.errorUpdating = "";
+                        $scope.loadSelectedPatientsAssociations();
+                    }, function (rejection) {
+                        $scope.successUpdating = "";
+                        $scope.errorUpdating = "Association could not be edited";
+                    });
+            }
+
+            $scope.checkForNoAssociations = function () {
+                if ($scope.selectedPatientsAssociations.length === 0) {
+                    $scope.noAssociationsMessage = "No associations found for this patient";
+                } else {
+                    $scope.noAssociationsMessage = "";
+                }
+            }
+
+            $scope.resetSuccessErrorMessages = function () {
+                $scope.successAdding = "";
+                $scope.errorAdding = "";
+                $scope.successUpdating = "";
+                $scope.errorUpdating = "";
+                $scope.successDeleting = "";
+                $scope.errorDeleting = "";
+            }
+
+            $scope.reloadAPIInformation = function () {
+                $scope.loadSelectedPatientsAssociations();
+            }
+
+            $scope.reloadAPIInformation();
+        });
+        /*]]>*/
+    </script>
+
+    <div ng-app="associationsApp" ng-controller="associationsCtrl" >
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="panel panel-primary">
+                        <div class="panel-heading">
+                            <h3>Manage Patient Advocates</h3>
+                        </div>
+
+
+                        <!-- table with a row for each advocate in advocates -->
+                        <div class="panel-body">
+                            <p>{{noAssociationsMessage}}</p>
+                            <table class="table table-bordered">
+                                <thead>
+                                <tr>
+                                    <th>Advocate Username</th>
+                                    <th>Permissions</th>
+                                    <th>Actions</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr ng-repeat="association in selectedPatientsAssociations">
+                                    <td>{{association.patientAdvocate}}</td>
+                                    <td style="width:50%">
+                                        <input type="checkbox"
+                                               ng-model="association.prescription"
+                                               ng-checked="association.prescription">
+                                        <label>View Prescriptions</label>
+                                        <input type="checkbox"
+                                               ng-model="association.billing"
+                                               ng-checked="association.billing">
+                                        <label>View Billing Information</label>
+                                        <input type="checkbox"
+                                               ng-model="association.visit"
+                                               ng-checked="association.visit">
+                                        <label>View Office Visits</label>
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-success"
+                                                ng-click="editAssociation(association)">
+                                            Update Permissions</button>
+                                        <br>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="panel-body">
+                            <div class="flex-container">
+                                <!-- Success and error messages for updating -->
+                                <div style="text-align: left">
+                                    <p style="color: green" ng-model="successUpdating" id="successU">{{successUpdating}}</p>
+                                    <p style="color: red" ng-model="errorUpdating" id="errU">{{errorUpdating}}</p>
+                                    <p style="color: green" ng-model="successDeleting" id="successD">{{successDeleting}}</p>
+                                    <p style="color: red" ng-model="errorUpdating" id="errD">{{errorDeleting}}</p>
+                                </div>
+
+                                <!-- A refresh button in the bottom right corner -->
+                                <div style="text-align: right">
+                                    <button type="button" class="btn btn-primary"
+                                            ng-click="loadSelectedPatientsAssociations()">Refresh</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+
+</html>

@@ -1,0 +1,153 @@
+<diagram program="umletino" version="15.0.0"><zoom_level>7</zoom_level><element><id>UMLPackage</id><coordinates><x>350</x><y>0</y><w>980</w><h>588</h></coordinates><panel_attributes>edu.ncsu.csc.iTrust2.controllers.api
+bg=#DA70D6
+group=group-2
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>567</x><y>42</y><w>385</w><h>112</h></coordinates><panel_attributes>&lt;&lt;Java Class&gt;
+APIPatientAdvocateController
+--
+-LoggerUtil: loggerUtil
+-PatientAdvocateService: service
+-SatisfactionSurveyStatisticsService: surveyService
+--
++createPatientAdvocate(PatientAdvocateUserForm form): ResponseEntity
++editPatientAdvocateAdmin(String id, PatientAdvocateUserForm form): ResponseEntity
++deletePatientAdvocate(String id): ResponseEntity
+**+editPatientAdvocateDemographics(PatientAdvocateForm form): ResponseEntity**
+--
+group=group-2
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>567</x><y>168</y><w>385</w><h>182</h></coordinates><panel_attributes>&lt;&lt;Java Class&gt;&gt;
+APIPatientController
+--
+-LoggerUtil: loggerUtil
+-UserService: userService
+-PatientService&lt;Patient&gt;: patientService
+-PatientAdvocateAssociationService: aService
+-VaccineTypeService: vaccService*
+--
++getPatients(): List&lt;Patients&gt;
++getPatient(): ResponseEntity
++getPatient(String id): ResponseEntity
++updatePatient(String id, PatientForm patientF): ResponseEntity
++deletePatient(String id): ResponseEntity
++getPatientZip(): ResponseEntity
++updatePatientVaccination(String id, String dose, String vaccine): ResponseEntity
+**+getPatientsAsAdvocate(): ResponseEntity**
+--
+group=group-2
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLPackage</id><coordinates><x>0</x><y>119</y><w>287</w><h>308</h></coordinates><panel_attributes>edu.ncsu.csc.iTrust2.controllers.routing
+--
+bg=red
+group=group1</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>21</x><y>154</y><w>238</w><h>133</h></coordinates><panel_attributes>&lt;&lt;Java Class&gt;&gt;
+PatientController
+--
+--
++requestAppointmentForm(Model model): String
++viewOfficeVisits(Model model): String
++viewPrescriptions(Model model): String
++index(Model model): String
++viewDemographics(Model model): String
++viewDiagnoses(Model model): String
++viewVaccinationHistory(Model model): String
++viewBills(Model model): String
+**+viewAdvocates(Model model):String**
+--
+group=group1</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>1001</x><y>378</y><w>308</w><h>133</h></coordinates><panel_attributes>&lt;&lt;Java Class&gt;
+APIPrescriptionController
+--
+-LoggerUtil: loggerUtil
+-PrescriptionService: prescriptionService
+-UserService: userService
+--
++addPrescription(PrescriptionForm pf): ResponseEntity
++editPrescription(PrescriptionForm pf): ResponseEntity
++deletePrescription(Long id): ResponseEntity
++getPrescriptions(): List&lt;Prescription&gt;
++getPrescription(Long id): ResponseEntity
+**+getPrescriptionsByPatient(String patientID): List&lt;Prescription&gt;**
+--
+group=group2</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>1001</x><y>210</y><w>308</w><h>154</h></coordinates><panel_attributes>&lt;&lt;Java Class&gt;
+APIOfficeVisitController
+--
+-LoggerUtil: loggerUtil
+-OfficeVisitService: officeVisitService
+-UserService: userService
+--
++createOfficeVisit(OfficeVisitForm visitForm): ResponseEntity
++updateOfficeVisit(Long id, OfficeVisitForm visitForm): ResponseEntity
++deletePrescription(Long id): ResponseEntity
++getOfficeVisits(): List&lt;OfficeVisit&gt;
++getOfficeVisitsForHCP(): List&lt;OfficeVisit&gt;
++getMyOfficeVisits(): List&lt;OfficeVisit&gt;
++getOfficeVisit(Long id): ResponseEntity
+**+getOfficeVisitsByPatient(String patientID): List&lt;OfficeVisit&gt;**
+--
+group=group-2
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>1001</x><y>42</y><w>308</w><h>154</h></coordinates><panel_attributes>&lt;&lt;Java Class&gt;
+APIBillController
+--
+-LoggerUtil: loggerUtil
+-BillService: billService
+-UserService: userService
+-PaymentService: paymentService
+--
++createBillOfficeVisit(OfficeVisitForm form): ResponseEntity
++createBillVaccineVisit(VaccineVisitForm form): ResponseEntity
++editBills(Long id, PaymentForm pay): ResponseEntity
++deletePrescription(Long id): ResponseEntity
++getBills(String username): List&lt;Bill&gt;
++getMyBills(): List&lt;Bill&gt;
+**+getBillsByPatient(String patientID): List&lt;Bill&gt;**
+--
+group=group-2
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLPackage</id><coordinates><x>1372</x><y>63</y><w>406</w><h>413</h></coordinates><panel_attributes>edu.ncsu.csc.iTrust2.services
+
+--
+bg=green</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>1491</x><y>126</y><w>147</w><h>140</h></coordinates><panel_attributes>&lt;&lt;Abstract Class&gt;&gt;
+Service
+--
+#getRepository():JpaRepository&lt;T, K&gt;
++save(T obj): void
++findAll(): List&lt;T&gt;
++saveAll(List&lt;T&gt; objects): void
++delete(T obj): void
++deleteAll(): void
++count(): Long)
+#findBy(Example&lt;T&gt; example): List&lt;T&gt;
++existsById(K id): boolean
++findById(K id): T
+
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>1435</x><y>322</y><w>266</w><h>77</h></coordinates><panel_attributes>&lt;&lt;Java Class&gt;&gt;
+PatientService
+--
+-PatientRepository: repository
+--
+#getRepository(): JpaRepository&lt;Patient, String&gt;
+**+getPatientsByAdvocate(String: advocate): List&lt;Patient&gt;**
+--</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>1561</x><y>259</y><w>21</w><h>77</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;-</panel_attributes><additional_attributes>10;10;10;90</additional_attributes></element><element><id>UMLClass</id><coordinates><x>28</x><y>301</y><w>217</w><h>105</h></coordinates><panel_attributes>**&lt;&lt;Java Class&gt;&gt;**
+**PatientAdvocateController**
+--
+--
+**+index(Model model): String**
+**+editDemographics(Model model): String**
+**+viewPatientInformation(Model model): String**
+**+viewPatientOfficeVisit(Model model): String**
+**+viewPatientBillingInfo(Model model): String**
+**+viewPatientPrescriptions(Model model): String**
+--</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>406</x><y>371</y><w>546</w><h>175</h></coordinates><panel_attributes>&lt;&lt;Java Class&gt;&gt;
+APIPatientAdvocateAssociationController
+--
+-LoggerUtil: loggerUtil
+-PersonnelService: personnelService
+-PatientService&lt;Patient&gt;: patientService
+-PatientAdvocateAssociationService: service
+--
++getPatientAdvocateAssociation(Long id): ResponseEntity
++getAllPatientAdvocateAssociations(): ResponseEntity
++getAllPatientAdvocateAssociationsForPatient(String patientID): ResponseEntity
+**+getAllPatientAdvocateAssociationsForPatientAsPatient(): ResponseEntity**
++getAllPatientAdvocateAssociationsForPatientAdvocate(String patientAdvocateID): ResponseEntity
+**+getAllPatientAdvocateAssociationsForCurrentPatientAdvocate(): ResponseEntity**
++updatePatientAdvocateAssociation(Long id, PatientAdvocateAssociationForm paForm): ResponseEntity
++deletePatientAdvocateAssociation(Long id): ResponseEntity
++createPatientAdvocateAssociation(PatientAdvocateAssociationForm paForm): ResponseEntity
+--
+group=group-3</panel_attributes><additional_attributes></additional_attributes></element></diagram>

@@ -1,0 +1,222 @@
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:include="layout :: head(title=~{::title},links=~{})">
+<title>Manage Users</title>
+</head>
+<body th:include="layout :: body" th:with="content=~{::content}">
+	<div th:fragment="content">
+		<script th::inline="javascript">
+			/* Otherwise Thymeleaf tries to parse Javascript as XML and breaks itself sometimes.  Sigh */
+			/*<![CDATA[*/
+			var app = angular.module("manageBillsApp", []);
+			app
+					.controller(
+							"manageBillsCtrl",
+							function($scope, $http) {
+
+								$scope.bill = "";
+								$scope.patients = [];
+								$scope.patient = "";
+								$scope.actions = ["CREDIT", "CASH", "CHECK", "INSURANCE"];
+								$scope.payment = {
+										"isDelinquent" : false,
+										"amount" : 0,
+										"type" : ""
+								}
+								
+								/* Overall idea: Select a patient, display bills associated with the patient,
+								accept a payment form submission for a specific bill, apply to bill somehow.
+								(maybe use the bill form, maybe push to end of paymentList
+								if the api requires that, not sure.) */
+								
+								$scope.rawbills = [];
+								$scope.loadBills = function(patient) {
+											$http.get("/iTrust2/api/v1/bills/" + patient.username).then(
+													function(response) {
+														$scope.bills = response.data;
+														$scope.successMessage = "";
+													},
+													function(rejection) {
+														$scope.bills = [];
+														$scope.errorMessage = "Could not load bills.";
+													});
+									
+								}
+								
+								$scope.loadPatients = function() {
+											$http.get("/iTrust2/api/v1/patients").then(
+													function(response) {
+														$scope.patients = response.data;
+														$scope.successMessage = "";
+													},
+													function(rejection) {
+														$scope.patients = [];
+														$scope.errorMessage = "Could not load patients.";
+													});								
+								}
+
+								$scope.markBillAsDelinquent = function(bill) {
+									
+									console.log(bill)
+									
+									var payment = {
+										"isDelinquent" : true,
+										"amount" : 0,
+										"type" : "DELINQUENT"
+									}
+									
+									console.log(payment)
+									
+									$http.put("/iTrust2/api/v1/bills/" + bill.id, payment).then(
+													function(response) {
+													$scope.loadBills($scope.patient);
+														$scope.successMessage = "Payment successful."
+													},
+													function(rejection) {
+														$scope.errorMessage = "Payment not successful."
+													});
+									
+								}
+								
+								$scope.makePayment = function(bill, payment) {
+									console.log(bill)
+									console.log(payment)
+										$http.put("/iTrust2/api/v1/bills/" + bill.id, payment).then(
+														function(response) {
+															$scope.loadBills($scope.patient);
+															$scope.payment = {
+																	"isDelinquent" : false,
+																	"amount" : 0,
+																	"type" : ""
+															}
+															$scope.successMessage = "Payment successful."
+														},
+														function(rejection) {
+															$scope.errorMessage = "Payment not successful."
+														});
+								}
+
+								$scope.getTemplate = function(bill) {
+									return 'view';
+								};
+								
+								$scope.selectPatient = function(patient) {
+									$scope.patient = patient
+									$scope.loadBills(patient);
+								};
+
+								$scope.totalCostText = function(bill) {
+									return '$' + bill.remainingCost;
+								}
+
+								$scope.loadPatients();
+							});
+		</script>
+		<div ng-app="manageBillsApp" ng-controller="manageBillsCtrl">
+			<div class="container"><br>
+				<div class="row">
+					<div class="col-md-12">
+						<div class="panel panel-primary">
+							<div class="panel-heading">
+								<h3>Manage Bills</h3>
+							</div><br>
+							<div class="col-md-12">
+							<div class="panel panel-default">
+								<div class="panel-heading">
+									<h4>Select a Patient</h4>
+								</div>
+								<div class="panel-body">
+									<form name="selectPatientForm" 
+									ng-submit="selectPatient(patient)">
+										<select ng-model="patient"
+											ng-options="item.username for item in patients" required="true">
+										<option value="">Select a patient to view their bills</option>
+									</select> <br> <br>
+									<input type="submit" id="submit" value="View Bills" />
+									</form>
+								</div>	
+								</div>	
+							</div>
+								
+							<div class="panel-body">
+								<table class="table table-bordered">
+									<thead>
+										<tr>
+											<th>Office Visit</th>
+											<th>Bill Status</th>
+											<th>Bill Total</th>
+										</tr>
+									</thead>
+									<tbody>
+										<tr name="billTableRow"
+											ng-repeat="b in bills | orderBy: 'id'"
+											ng-include="getTemplate(b)" billId={{b.id}}>
+										</tr>
+									</tbody>
+								</table>
+								<script type="text/ng-template" id="view">
+                <td name="billCell">{{b.date}}</td>
+			    <td name="descriptionCell">{{b.status}}</td>
+				<td name="totalCostCell">{{totalCostText(b)}}</td>
+
+                </script>
+<style>
+form {
+	width: 1000px;
+}
+
+input[type=text] {
+	text-align: left;
+	width: 130px;
+	height: 20px
+}
+
+.clear {
+	clear: both;
+	height: 0;
+	line-height: 0;
+}
+
+.floatright {
+	float: right;
+}
+</style>
+								<div class="row">
+									<div class="col-md-12">
+										<div class="panel panel-default">
+											<div class="panel-heading "><h4>Update Bill</h4></div>
+											<div class="panel-body">
+												<form name="makePaymentForm"
+													ng-submit="makePayment(bill, payment)">
+													<select ng-model="bill"
+														ng-options="item.date for item in bills" required="true">
+														<option value="">Select a bill</option>
+													</select>
+													<select ng-model="payment.type"
+														ng-options="item for item in actions" required="true">
+														<option value="">Payment type</option>
+													</select><br> <br><b> Amount: </b><input
+														type="text" name="amount" id="amount"
+														ng-model="payment.amount" /> <br> <br>
+														 
+  													<input type="submit" id="submit" value="Submit" />	
+  													
+												</form>
+												<div>
+													<p style="color: red" ng-model="message" id="error">{{successMessage}}</p>
+												</div>
+												<div>
+													<p style="color: green" ng-model="message"
+														id="success">{{errorMessage}}</p>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+</body>
+</html>

@@ -1,0 +1,85 @@
+<diagram program="umletino" version="14.3.0"><zoom_level>10</zoom_level><help_text>Space for diagram notes</help_text><element><id>UMLPackage</id><coordinates><x>300</x><y>20</y><w>890</w><h>500</h></coordinates><panel_attributes>edu.ncsu.csc.iTrust2.controllers
+--
+bg=yellow</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>680</x><y>60</y><w>340</w><h>170</h></coordinates><panel_attributes>&lt;&lt;Java Class&gt;&gt;
+*APIController*
+/edu.ncsu.csc.iTrust2.controllers.api/
+--
+_#BASE_PATH : String_
+_-GSON : Gson_
+--
+_#toJson(obj:Object) : String_
+_#toJson(obj:Object, cls:Class&lt;JSONResponse&gt;) : String_
+_#responseMessage(status:String, message:String) : String_
+_#errorResponse(message:String) : String_
+_#successResponse(message:String) : String_</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>890</x><y>260</y><w>270</w><h>110</h></coordinates><panel_attributes>&lt;&lt;Java Class&gt;&gt;
+*JSONResponse*
+/edu.ncsu.csc.iTrust2.controllers.api/
+--
+#status : String
+#message : String
+--
++JSONResponse(status:String, message:String)
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLPackage</id><coordinates><x>300</x><y>540</y><w>410</w><h>350</h></coordinates><panel_attributes>edu.ncsu.csc.iTrust2.models
+--
+bg=green</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>500</x><y>640</y><w>30</w><h>70</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>10;10;10;50</additional_attributes></element><element><id>UMLClass</id><coordinates><x>350</x><y>690</y><w>300</w><h>170</h></coordinates><panel_attributes>&lt;&lt;Java Class&gt;&gt;
+*AppointmentRequest*
+--
+-comments: String
+-date: ZonedDateTime
+-hcp: User
+-id: Long
+-patient: User
+-status: Status
+-type: AppointmentType
+--
+/Getters + setters for fields above/
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLPackage</id><coordinates><x>770</x><y>550</y><w>420</w><h>250</h></coordinates><panel_attributes>edu.ncsu.csc.iTrust2.forms
+--
+bg=red</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>810</x><y>600</y><w>340</w><h>170</h></coordinates><panel_attributes>&lt;&lt;Java Class&gt;&gt;
+*AppointmentRequestForm*
+--
+-status: String
+-patient: String
+-hcp : String
+-date: String
+-id: String
+-type: String
+-comments: String
+--
+/Getters + setters for fields above/</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>1010</x><y>120</y><w>110</w><h>160</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;&lt;&lt;-
+m1=1
+m2=0..1</panel_attributes><additional_attributes>10;10;70;10;70;140</additional_attributes></element><element><id>UMLClass</id><coordinates><x>330</x><y>60</y><w>310</w><h>80</h></coordinates><panel_attributes>&lt;&lt;Java Class&gt;&gt;
+*HCPController*
+/edu.ncsu.csc.iTrust2.controllers.routing/
+--
+--
++requestAppointmentForm(model:Model): String</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>710</x><y>220</y><w>30</w><h>60</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>10;10;10;40</additional_attributes></element><element><id>UMLClass</id><coordinates><x>320</x><y>260</y><w>500</w><h>230</h></coordinates><panel_attributes>&lt;&lt;Java Class&gt;&gt;
+*APIAppointmentRequestController*
+/edu.ncsu.csc.iTrust2.controllers.api/
+--
+-service: AppointmentRequestService
+-loggerUtil: LoggerUtil
+-userService: UserService
+--
++getAppointmentRequests(): List&lt;AppointmentRequest&gt;
++getAppointmentRequestsForPatient(): List&lt;AppointmentRequest&gt;
++getAppointmentRequestsForHCP(): List&lt;AppointmentRequest&gt;
++getAppointmentRequest(id:Long): ResponseEntity
++createAppointmentRequest(requestForm:AppointmentRequestForm): ResponseEntity
++deleteAppointmentRequest(id:Long): ResponseEntity
++updateAppointmentRequest(id:Long, requestF:AppointmentRequestForm): ResponseEntity
++upcomingAppointments(): List&lt;AppointmentRequest&gt;</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>330</x><y>150</y><w>310</w><h>80</h></coordinates><panel_attributes>&lt;&lt;Java Class&gt;&gt;
+*PatientController*
+/edu.ncsu.csc.iTrust2.controllers.routing/
+--
+--
++requestAppointmentForm(model:Model): String</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>850</x><y>410</y><w>310</w><h>80</h></coordinates><panel_attributes>&lt;&lt;Java Class&gt;&gt;
+*APIEnumController*
+/edu.ncsu.csc.iTrust2.controllers.api/
+--
+--
++getAppointmentTypes(): List&lt;AppointmentType&gt;</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>850</x><y>220</y><w>30</w><h>210</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>10;10;10;190</additional_attributes></element><element><id>UMLClass</id><coordinates><x>450</x><y>580</y><w>120</w><h>70</h></coordinates><panel_attributes>&lt;&lt;Abstract Class&gt;&gt;
+/DomainObject/
+--
+--
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>610</x><y>480</y><w>30</w><h>230</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;&lt;-</panel_attributes><additional_attributes>10;10;10;210</additional_attributes></element><element><id>Relation</id><coordinates><x>730</x><y>480</y><w>100</w><h>160</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;&lt;-</panel_attributes><additional_attributes>10;10;10;140;80;140</additional_attributes></element></diagram>

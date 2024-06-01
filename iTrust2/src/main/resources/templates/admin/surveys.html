@@ -1,0 +1,193 @@
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:include="layout :: head(title=~{::title},links=~{::script})">
+<title>Provider Surveys</title>
+<script th:src="@{/js/jk-rating-stars.js}"
+			src="../../../js/jk-rating-stars.js"></script>
+</head>
+<body th:include="layout :: body" th:with="content=~{::content}">
+	<div th:fragment="content">
+		<script th::inline="javascript">
+		/*<![CDATA[*/
+ 			var app = angular.module("viewSurveysApp", ['jkAngularRatingStars']);
+		
+ 			/**
+             * A filter to humanize the text to be more user friendly.
+             */
+            app.filter('humanize', function() {
+                return function (input) {
+                	if (input == undefined) {
+                		return "N/A";
+                	} else {
+                		return input.toLowerCase().split('_')
+                        .map((word) => word.charAt(0).toUpperCase() + word.substring(1))
+                        .join(' ');
+                	}
+                    
+                }
+            });
+ 			
+			app.controller("surveysCtrl", function($scope, $http) {
+				
+				$scope.displayDetails = false;
+				$scope.statistics = [];
+				
+				// Load hcps and their statistics
+		        $scope.getStatistics = function () {
+		        	
+		        	$http.get("/iTrust2/api/v1/surveys/statistics").then(
+						function (response) {
+							$scope.statistics = response.data;
+							$scope.errorMsg = "";
+						}, function (rejection) {
+							$scope.statistics = [];
+							$scope.errorMsg = "Could not retrieve survey statistics.";
+						});
+		        	
+		        }
+				
+				$scope.showDetails = function() {
+					
+					$scope.displayDetails = true;
+					
+				}
+		        
+		        $scope.getStatistics(); 
+
+			});
+		/*]]>*/
+		</script>
+		<div ng-app="viewSurveysApp" ng-controller="surveysCtrl">
+			<div class="container">
+				<div class="row">
+					<div class="col-md-12">
+						<div class="panel panel-primary">
+							<div class="panel-heading">
+								<h3>Satisfaction Surveys - Providers</h3>
+							</div>
+							<div class="panel-body">
+								<table class="table table-bordered">
+									<thead>
+										<tr>
+											<th></th>
+											<th>Provider</th>
+											<th>Average Wait Time</th>
+											<th>Average Satisfaction</th>
+											<th>Surveys Filled</th>
+										</tr>
+									</thead>
+									<tbody>
+										<tr name="hospitalTableRow"
+											ng-repeat="p in statistics | orderBy: 'name'"
+											userId={{p.hcp.username}}>
+											<td name="selectCell"><input type="radio" name="selectRow" ng-model="$parent.selectedProvider" ng-value="p"></td>
+											<td name="providerCell">{{p.hcp.username}}</td>
+											<td name="averageWaitTimeCell">{{p.averageWaitingRoomTime | humanize}}</td>
+											<td name="averageSatisfactionCell">
+												<jk-rating-stars rating="(p.averageVisitSatisfaction + p.averageTreatmentSatisfaction) / 2" read-only="true"></jk-rating-stars>
+											</td>
+											<td name="surveysFilledCell">{{p.numberOfSurveys}}</td>
+										</tr>
+									</tbody>
+									
+								</table>
+							</div>
+							
+							<div class="panel-footer text-right">
+								<button class="btn btn-primary btn-lg" ng-click="showDetails()"
+									name="showSurvey" ng-disabled="selectedProvider == undefined">View Details</button>
+							</div>
+							
+						</div>
+						
+						
+						<!-- Display the information about the selected visit -->
+						<div class='panel panel-default' ng-show="displayDetails">
+							
+							<div class="panel-heading">
+								<h3>Satisfaction Surveys - {{selectedProvider.hcp.username}}</h3>
+							</div>
+							
+							<div class='panel-body'>
+								<div class="row">
+									<div class="form-group col-md-2">
+										Visit Satisfaction:
+									</div>
+		
+									<div class="form-group col-md-2">
+										<jk-rating-stars rating="selectedProvider.averageVisitSatisfaction" read-only="true"></jk-rating-stars>
+										<input type="text" style="opacity: 0" id="averageVisitSatisfaction" name="averageVisitSatisfaction" ng-model="selectedProvider.averageVisitSatisfaction"/>
+
+									</div>
+								</div>
+								
+								<div class="row">
+									<div class="form-group col-md-2">
+										Treatment Satisfaction:
+									</div>
+		
+									<div class="form-group col-md-2">
+										<jk-rating-stars rating="selectedProvider.averageTreatmentSatisfaction" read-only="true"></jk-rating-stars>
+										<input type="text" style="opacity: 0" id="averageTreatmentSatisfaction" name="averageTreatmentSatisfaction" ng-model="selectedProvider.averageTreatmentSatisfaction"/>
+									</div>
+								</div>
+								
+								<div class="row">
+									<div class="form-group col-md-2">
+										Average Waiting Room Time:
+									</div>
+		
+									<div class="form-group col-md-2">
+										 {{selectedProvider.averageWaitingRoomTime | humanize}}
+									</div>
+								</div>
+								
+								<div class="row">
+									<div class="form-group col-md-2">
+										Average Time to Examination:
+									</div>
+		
+									<div class="form-group col-md-2">
+										 {{selectedProvider.averageExaminationResponseTime | humanize}}
+									</div>
+								</div>
+								
+								<div class="col-md-6">
+									<div class='panel panel-info' ng-show="displayDetails">
+									
+										<div class="panel-heading">
+											<h3>Log History</h3>
+										</div>
+										
+										<div class='panel-body'>
+											
+											
+											<div class='row form-group' name="logHistoryTable"
+												ng-repeat="note in selectedProvider.notes"
+												ng-show="selectedProvider.notes.length != 0">
+												<div class='col-md-4' name="averageSatisfactionCell">
+													<jk-rating-stars rating="note.averageSatisfaction" read-only="true"></jk-rating-stars>
+												</div>
+												<div class='col-md-8' name="commentsCell">{{note.comments}}</div>
+											</div>
+											
+											<div class='row' ng-show="selectedProvider.notes.length == 0">
+											
+												<div class="form-group col-md-12">
+													No notes for this provider.
+												</div>
+											
+											</div>
+											
+										</div>
+									
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</body>
+</html>	

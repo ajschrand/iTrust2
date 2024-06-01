@@ -1,0 +1,1088 @@
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:include="layout :: head(title=~{::title},links=~{})">
+	<title>Manage Advocates</title>
+	<link rel="stylesheet"
+		href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+	<style>
+		.flex-container {
+			display: flex;
+			justify-content: space-between;
+		}
+	</style>
+</head>
+<body th:include="layout :: body" th:with="content=~{::content}">
+	<div th:fragment="content">
+		<script th::inline="javascript">
+		/* Otherwise Thymeleaf tries to parse Javascript as XML and breaks itself sometimes.  Sigh */
+		/*<![CDATA[*/
+ 			var app = angular.module("manageAdvocatesApp", []);
+			app.controller("manageAdvocatesCtrl", function($scope, $http) {
+				
+
+				$scope.advocateFormEdit = {};
+				
+				$scope.advocateFormAdd = {};
+
+				
+				$scope.selectedAdvocate = "";
+				
+				/* 
+				The errAdd and errEdit arrays store the error messages for the 13 applicable fields as follows:
+					0 : username
+					1 : password
+					2 : password2
+					3 : first name
+					4 : middle name
+					5 : last name
+					6 : nickname
+					7 : email
+					8 : address1
+					9 : address2
+					10: city
+					11: zip
+					12: phone number
+				*/
+				/* 
+					initialize field error message holding for the add and edit functionality
+					setup functions to reset the error messages
+				*/
+				$scope.errAdd = [];
+				$scope.resetErrAdd = function() {
+					for(var i = 0; i < 13; i++) {
+				   	   $scope.errAdd[i] = "";
+					}
+				}
+				$scope.errEdit = [];
+				$scope.resetErrEdit = function() {
+					for(var i = 0; i < 13; i++) {
+				   	   $scope.errEdit[i] = "";
+					}
+				}
+				
+
+				/* state initialization for the frontend advocate knowledge */
+				$scope.advocates = [];
+				/* 
+					Function for loading the advocates
+					Updates state for both the table under Existing Advocates
+					and the droplist in Update and Advocate
+				*/
+				$scope.loadAdvocates = function () {
+			    	$http.get("/iTrust2/api/v1/personnel/getbyroles/ROLE_PATIENTADVOCATE").then(
+			  	    	function (response) {
+		  	              $scope.advocates = response.data;
+		  	              $scope.message = "";
+		  	           	}, function (rejection) {
+		  	              $scope.advocates = [];
+		  	              $scope.message = "Could not display advocates";
+		  	            });
+		          	/* reset table error and success messages */
+		          	$scope.errorMessage = "";
+		          	$scope.successMessage = "";
+		          	if ($scope.selectedAdvocate == null) {
+		          		$scope.isAdvocateSelected = false;
+		          	}
+		          	
+			  	}
+
+				/* state initialization for the checkboxes */
+				$scope.editEnabled = false;
+				$scope.addEnabled = false;
+				
+				/* 
+					Function for checking if all non-username form components are valid
+					Takes the form to check, and a string for the mode
+						The mode string has __2__ current valid values:
+							"ADD"
+							"EDIT"
+					Returns true if it is valid, false if it is not
+				*/
+				var checkValidFormComponents = function(form, mode) {
+					if (!["ADD","EDIT"].includes(mode)){
+						console.log("IMPROPER CALL");
+						return false;
+					}
+
+					var valid = true;
+					/* initializing temporary error array */
+					var err = [];
+					/* first error is for the username, not applicable here */
+					err[0] = "NOT APPLICABLE";
+					
+					/* Actual form checking begins */
+					
+					if( form.password == null || form.password.length < 6) {
+	 					err[1] = ("Password must be 6 or more characters long");
+	 					valid = false;
+					} else if (form.password.length > 20) {
+
+						err[1] = ("Password must be 20 or less characters long");
+	 					valid = false;
+					} else {
+					    err[1] = "";
+				    }
+					
+
+					if( !(form.password === form.password2)) {
+						err[2] = ("Passwords do not match");
+						valid = false;
+					} else if( form.password2 == null || form.password2.length < 6) {
+	 					err[2] = ("Password must be 6 or more characters long");
+	 					valid = false;
+					} else if (form.password2.length > 20) {
+
+						err[2] = ("Password must be 20 or less characters long");
+	 					valid = false;
+					} else {
+					    err[2] = "";
+				    }
+					
+
+				    if(!form.firstName || form.firstName.length > 20) {
+
+					    err[3] = ("First name can not be empty or longer than 20 characters");
+					    valid = false;
+				    } else {
+					    err[3] = "";
+				    }
+				    
+
+				    if(!form.middleName || form.middleName.length > 30) {
+
+					    err[4] = ("Middle name can not be empty or longer than 30 characters");
+					    valid = false;
+				    } else {
+					    err[4] = "";
+				    }
+				    
+
+				    if(!form.lastName || form.lastName.length > 30) {
+
+					    err[5] = ("last name can not be empty or longer than 30 characters");
+					    valid = false;
+				    } else {
+					    err[5] = "";
+				    }
+				    
+
+				    if(!form.nickname || form.nickname.length > 30) {
+
+					    err[6] = ("nickname can not be empty or longer than 30 characters");
+					    valid = false;
+				    } else {
+					    err[6] = "";
+				    }
+				    
+
+				    if(!form.email || form.email.length > 30) {
+
+					    err[7] = ("email can not be empty or longer than 30 characters");
+					    valid = false;
+				    } else {
+					    err[7] = "";
+				    }
+				    
+
+				    if(!form.address1 || form.address1.length > 50) {
+
+					    err[8] = ("primary address can not be empty or longer than 50 characters");
+					    valid = false;
+				    } else {
+					    err[8] = "";
+				    }
+				    
+
+				    if(form.address2 && form.address2.length > 50) {
+
+					    err[9] = ("secondary address can not be longer than 50 characters");
+					    valid = false;
+				    } else {
+					    err[9] = "";
+				    }
+				    
+
+				    if(!form.city || form.city.length > 15) {
+
+					    err[10] = ("city can not be empty or longer than 15 characters");	
+					    valid = false;
+				    } else {
+					    err[10] = "";
+				    }
+				    
+
+				    if(!/(^\d{5}$)|(^\d{5}-\d{4}$)/.test(form.zip) ) {
+
+						err[11] = ("zipcode must be exactly 5 numbers");
+						valid = false;
+					} else {
+					    err[11] = "";
+					}
+				    
+
+				    if(!/(^[0-9]{3}-[0-9]{3}-[0-9]{4}$)/.test(form.phone) || !form.phone) {
+
+					    err[12] = ("phone can not be empty and must have correct format (e.g. 123-456-7890)");
+					    valid = false;
+				    } else {
+					    err[12] = "";
+				    }
+				    
+				    /* properly assign the field-based error messages */
+				    if (mode === "ADD") {
+				    	for(var i = 1; i < 13; i++) {
+					   	   $scope.errAdd[i] = err[i];
+						}
+				    	return valid;
+				    } else if (mode === "EDIT") {
+				    	for(var i = 1; i < 13; i++) {
+					   	   $scope.errEdit[i] = err[i];
+						}
+				    	return valid;
+				    }
+				    
+				    /* redundancy false return if mode is invalid */
+				    return false;
+					
+				}
+				
+				
+				/* 
+					Function for checking if the edit form is valid
+					Returns true if it is valid, false if it is not
+				*/
+				var checkValidEditForm = function(form) {
+
+					/* NOTES:
+						This validation checks the patientadvocateuser form, containing:
+							username, roles, password, password2, enabled,
+							firstname, middlename, lastname, nickname, email,
+							address1, address2, city, state, zip, phone
+					*/
+					var valid = true;
+
+					if( form.username == "" ) {
+
+						$scope.errEdit[0] = ("Username cannot be empty");
+						valid = false;
+					} else {
+						exists = false;
+
+						for(var i = 0; i < $scope.advocates.length; i++ ) {
+							if( form.username === $scope.advocates[i].username) {
+
+							    exists = true;
+							}
+						}
+						if (!exists) {
+							$scope.errEdit[0] = ("Advocate no longer exists");
+						}
+					}
+					valid = checkValidFormComponents(form, "EDIT");
+
+					
+				    
+				    return valid;
+				}
+				
+
+				/* 
+					Function for checking if the add form is valid
+					Returns true if it is valid, false if it is not
+				*/
+				var checkValidAddForm = function(form) {
+	
+					/* NOTES:
+						This validation checks the patientadvocateuser form, containing:
+							username, roles, password, password2, enabled,
+							firstname, middlename, lastname, nickname, email,
+							address1, address2, city, state, zip, phone
+					*/
+					var valid = true;
+
+					if( form.username == "" ) {
+						$scope.errAdd[0] = ("Username cannot be empty");
+						valid = false;
+					} else {
+						for(var i = 0; i < $scope.advocates.length; i++ ) {
+							if( form.username === $scope.advocates[i].username) {
+
+							    $scope.errAdd[0] = ("Username already exists");
+							    valid = false;
+							}
+						}
+					}
+					
+					valid = checkValidFormComponents(form, "ADD");
+
+					
+				    
+				    return valid;
+				}
+				
+
+				/* Get the data about States, and teach it to the front end */
+				$http.get("/iTrust2/api/v1/state").then(function(response) {
+				    $scope.states = response.data;
+				});
+				
+				/* Initialize wether or not an advocate is selected to false */
+				$scope.isAdvocateSelected = false;
+				
+				/*
+					Function for what happens when you select an advocate
+					If the advocate is null (selecting the default value):
+						reset all values of the form
+					Otherwise:
+						grab everything you can about the advocate and put it into the form
+						set isAdvocateSelected to true
+					Clear the error and success messages for editing
+				*/
+				$scope.selectAdvocate = function(advocate) {
+					if (advocate == null) {
+		          		$scope.isAdvocateSelected = false;
+		          		$scope.advocateFormEdit.username = "";
+						$scope.advocateFormEdit.password = "";
+						$scope.advocateFormEdit.password2 = "";
+						$scope.advocateFormEdit.roles = ["ROLE_PATIENTADVOCATE"];
+						$scope.advocateFormEdit.enabled = 0;
+						if ($scope.advocateFormEdit.enabled == 1) {
+							$scope.editEnabled = true;
+						} else {
+							$scope.editEnabled = false;
+						}
+						
+						$scope.advocateFormEdit.firstName = "";
+						$scope.advocateFormEdit.middleName = "";
+						$scope.advocateFormEdit.lastName = "";
+						$scope.advocateFormEdit.nickname = "";
+						$scope.advocateFormEdit.address1 = "";
+						$scope.advocateFormEdit.address2 = "";
+						$scope.advocateFormEdit.city = "";
+						$scope.advocateFormEdit.state = "";
+						$scope.advocateFormEdit.zip = "";
+						$scope.advocateFormEdit.phone = "";
+						$scope.advocateFormEdit.email = "";
+		          	} else {
+		          		
+		          		$scope.advocateFormEdit.username = advocate.username;
+						$scope.advocateFormEdit.password = "";
+						$scope.advocateFormEdit.password2 = "";
+						$scope.advocateFormEdit.roles = advocate.roles;
+						$scope.advocateFormEdit.enabled = advocate.enabled;
+						if ($scope.advocateFormEdit.enabled == 1) {
+							$scope.editEnabled = true;
+						} else {
+							$scope.editEnabled = false;
+						}
+						
+						$scope.advocateFormEdit.firstName = advocate.firstName;
+						$scope.advocateFormEdit.middleName = advocate.middleName;
+						$scope.advocateFormEdit.lastName = advocate.lastName;
+						$scope.advocateFormEdit.nickname = advocate.nickName;
+						$scope.advocateFormEdit.address1 = advocate.address1;
+						$scope.advocateFormEdit.address2 = advocate.address2;
+						$scope.advocateFormEdit.city = advocate.city;
+						if (advocate.state === null | advocate.state === "") {
+							$scope.advocateFormEdit.state = "AL";
+						} else {
+							$scope.advocateFormEdit.state = advocate.state;
+						}
+						$scope.advocateFormEdit.zip = advocate.zip;
+						$scope.advocateFormEdit.phone = advocate.phone;
+						$scope.advocateFormEdit.email = advocate.email;
+						
+						$scope.isAdvocateSelected = true;
+
+						$scope.successEdit = "";
+						
+		          	}
+					
+					$scope.errorEdit = "";
+					
+					$scope.resetErrEdit();
+
+					
+					
+				}
+				/* Necessary to help setup table */
+				$scope.getTemplate = function (user) {
+			    	return 'view';
+			    };
+				
+			    /* Displaying enabled as yes/no in table */
+		        $scope.enabledText = function(user) {
+		        	  if(user.enabled) {
+		        		  return 'yes';        		  
+		        	  } else {
+		        		  return 'no';
+		        	  }
+		        }
+		        
+
+		        
+		        /*
+		        	Function for deleting advocate
+		        	Called when the delete button in the table is pressed
+		        	Calls the API endpoint for deleting an advocate
+		        	Loads Advocates on a successful delete
+		        	Sets success/error Messages accordingly 
+		        */
+		        $scope.deleteAdvocate = function(advocate) {
+			           
+		        	$http.delete('/iTrust2/api/v1/patientAdvocates/' + advocate.username).then(
+		        			function successCallback(response) {
+		        				$scope.loadAdvocates();
+		        				$scope.successMessage = "Advocate " + advocate.username + " deleted successfuly";
+		        				$scope.errorMessage = "";
+		        			}, function errorCallback(rejection) {
+		        				$scope.loadAdvocates();
+		        				console.log(rejection);
+		        				console.log(rejection.data);
+		        				$scope.successMessage = "";
+		        				$scope.errorMessage = "Could not remove advocate " + advocate.username;
+		        				
+		        			});
+		        	
+
+		       	}
+		        
+		        /*
+		        	Function for updating an advocate
+		        	Checks whether or not the form is valid
+		        		The check method sets all the necessary field error messages
+		        	If it is invalid, set overall edit error message
+		        	If it is valid, ensure that the roles and enabled parts of the form are correct
+		        		These are the two elements of the form not directly controlled by frontend state
+		        	Then call the Put API endpoint for patientAdvocates
+		        	If successful:
+		        		load the advocates (to update the table and droplist)
+		        		reset the edit form (to allow for another edit with a clean slate)
+		        		set isAdvocateSelected to false
+		        		set the Overall edit success and error messages accordingly
+	        		If unsuccessful:
+		        		load the advocates (to update the table and droplist)
+		        		set the Overall edit success and error messages accordingly	
+		        */
+		        $scope.updateAdvocate = function () {
+			        var valid = checkValidEditForm($scope.advocateFormEdit);
+       		 	 	if (!valid) {
+		        	    $scope.errorEdit = "Advocate could not be updated";
+			            $scope.successEdit = "";
+		          	} else {
+		          		/* ensure that the advocate is an advocate */
+		          		$scope.advocateFormEdit.roles = ["ROLE_PATIENTADVOCATE"];
+		          		/* ensure enabled information correctly translated */
+		          		if ($scope.editEnabled == true) {
+			          		$scope.advocateFormEdit.enabled = 1;
+		          		} else {
+			          		$scope.advocateFormEdit.enabled = 0;
+		          		}
+			            $http.put("/iTrust2/api/v1/patientAdvocates/" + $scope.advocateFormEdit.username, $scope.advocateFormEdit).then(
+
+			           		function (response) {
+			            		$scope.loadAdvocates();
+
+			            		$scope.resetEditForm();
+
+								$scope.isAdvocateSelected = false;
+			            		
+				                $scope.errorEdit = "";
+				                $scope.successEdit = "Advocate updated successfully";
+			              	}, function (rejection) {
+			            	    $scope.loadAdvocates();
+				                $scope.errorEdit = "Could not update Advocate: " + $scope.advocateFormEdit.username;
+				                $scope.successEdit = "";
+
+			              	});
+		          	}
+		        }
+		        
+		        
+		        		
+        		/*
+		        	Function for creating an advocate
+		        	Checks whether or not the form is valid
+		        		The check method sets all the necessary field error messages
+		        	If it is invalid, set overall add error message
+		        	If it is valid, ensure that the roles and enabled parts of the form are correct
+		        		These are the two elements of the form not directly controlled by frontend state
+		        	Then call the Post API endpoint for patientAdvocates
+		        	If successful:
+		        		load the advocates (to update the table and droplist)
+		        		reset the add form (to allow for another advocate creation with a clean slate)
+		        		set the Overall add success and error messages accordingly
+	        		If unsuccessful:
+		        		load the advocates (to update the table and droplist)
+		        		set the Overall add success and error messages accordingly	
+		        */
+		        $scope.createAdvocate = function () {
+		        	/* errorAdding and successAdding don't exist yet, at least not in the correct place */
+		        	
+
+			        var valid = checkValidAddForm($scope.advocateFormAdd);
+       		 	 	if (!valid) {
+		        	    $scope.errorAdd = "Advocate could not be created";
+			            $scope.successAdd = "";
+		          	} else {
+		          		/* ensure that the advocate is an advocate */
+		          		$scope.advocateFormAdd.roles = ["ROLE_PATIENTADVOCATE"];
+		          		/* ensure enabled information correctly translated */
+		          		if ($scope.addEnabled == true) {
+			          		$scope.advocateFormAdd.enabled = 1;
+		          		} else {
+			          		$scope.advocateFormAdd.enabled = 0;
+		          		}
+			            $http.post("/iTrust2/api/v1/patientAdvocates", $scope.advocateFormAdd).then(
+
+			           		function (response) {
+			            		$scope.loadAdvocates();
+			            		
+			            		$scope.resetAddForm();
+			            		
+
+				                $scope.errorAdd = "";
+				                $scope.successAdd = "Advocate created successfully";
+				                
+			              	}, function (rejection) {
+			            	    $scope.loadAdvocates();
+				                $scope.errorAdd = "Could not create Advocate: " + rejection.data.message;
+				                $scope.successAdd = "";
+
+			              	});
+		          	}
+		        }
+		        
+		       	/*
+		       		Function for reseting the edit form
+		       		Set the state of the edit form to blank or "default" values
+		       			$scope.editEnabled should be false, corresponding with the form enabled being 0
+		       			the role should be "ROLE_PATIENTADVOCATE"
+		       	*/
+		        $scope.resetEditForm = function() {
+
+		        	$scope.advocateFormEdit.username = "";
+            		$scope.advocateFormEdit.password = "";
+            		$scope.advocateFormEdit.password2 = "";
+            		$scope.advocateFormEdit.enabled = 0;
+					$scope.editEnabled = false;
+            		$scope.advocateFormEdit.role = "ROLE_PATIENTADVOCATE";
+            		
+					$scope.advocateFormEdit.firstName = "";
+					$scope.advocateFormEdit.middleName = "";
+					$scope.advocateFormEdit.lastName = "";
+					$scope.advocateFormEdit.nickname = "";
+					$scope.advocateFormEdit.address1 = "";
+					$scope.advocateFormEdit.address2 = "";
+					$scope.advocateFormEdit.city = "";
+					$scope.advocateFormEdit.state = "AL";
+					$scope.advocateFormEdit.zip = "";
+					$scope.advocateFormEdit.phone = "";
+					$scope.advocateFormEdit.email = "";
+					
+		        }
+		        
+		        /*
+	       			Function for reseting the add form
+	       			Set the state of the add form to blank or "default" values
+	       				$scope.addEnabled should be false, corresponding with the form enabled being 0
+	       				the role should be "ROLE_PATIENTADVOCATE"
+	       		*/
+		        $scope.resetAddForm = function() {
+		        	$scope.advocateFormAdd.username = "";
+            		$scope.advocateFormAdd.password = "";
+            		$scope.advocateFormAdd.password2 = "";
+            		$scope.advocateFormAdd.enabled = 0;
+					$scope.addEnabled = false;
+            		$scope.advocateFormAdd.role = "ROLE_PATIENTADVOCATE";
+            		
+					$scope.advocateFormAdd.firstName = "";
+					$scope.advocateFormAdd.middleName = "";
+					$scope.advocateFormAdd.lastName = "";
+					$scope.advocateFormAdd.nickname = "";
+					$scope.advocateFormAdd.address1 = "";
+					$scope.advocateFormAdd.address2 = "";
+					$scope.advocateFormAdd.city = "";
+					$scope.advocateFormAdd.state = "AL";
+					$scope.advocateFormAdd.zip = "";
+					$scope.advocateFormAdd.phone = "";
+					$scope.advocateFormAdd.email = "";
+		        }
+		        
+		        /*
+		        	Function for reseting the state of the Edit panel
+		        	Calls loadAvocates() (page interaction --> update page state)
+		        	Calls resetEditForm(), to reset the form state
+		        	Sets isAdvocateSelected to false, because performing the above actions
+		        		deselects the advocate fromthe droplist
+			        Calls resetErrEdit(), to reset the field specific errors
+			        Resets the edit general error and success messages
+		        */
+		        $scope.resetEditPanel = function() {
+		        	$scope.loadAdvocates();
+		        	$scope.resetEditForm();
+		        	$scope.isAdvocateSelected = false;
+		        	$scope.resetErrEdit();
+		        	$scope.errorEdit = "";
+	                $scope.successEdit = "";
+		        }
+		        
+		        /*
+		        	Function for reseting the state of the Add panel
+		        	Calls loadAdvocates() (page interaction --> update page state)
+		        	Calls resetAddForm(), to reset the form state
+		        	Calls resetErrAdd(), to reset the field specific errors
+			        Resets the add general error and success messages
+		        */
+		        $scope.resetAddPanel = function() {
+		        	$scope.loadAdvocates();
+		        	$scope.resetAddForm();
+		        	$scope.resetErrAdd();
+		        	$scope.errorAdd = "";
+	                $scope.successAdd = "";
+		        }
+		        
+		        
+
+		        /* Initialize field specific error messages */
+		        $scope.resetErrEdit();
+		        $scope.resetErrAdd();
+		        /* Grab initial advocate state from repository */
+		        $scope.loadAdvocates();
+		        /* Initialize form state */
+		        $scope.resetEditForm();
+		        $scope.resetAddForm();
+
+		        
+			        
+				
+		});
+			
+</script>
+		<div ng-app="manageAdvocatesApp" ng-controller="manageAdvocatesCtrl">
+			<div class="container">
+				<div class="row">
+					<div class="col-md-12">
+						<div class="panel panel-primary">
+							<div class="panel-heading">
+								<h3>Admin Manage Advocates</h3>
+							</div>
+							<div class="panel-body">
+								<table class="table table-bordered">
+									<caption>Existing Advocates:</caption>
+									<thead>
+										<tr>
+											<th>Advocate Username</th>
+											<th>Enabled</th>
+											<th>Delete Advocate</th>
+										</tr>
+									</thead>
+									<tbody>
+										<tr name="userTableRow"
+											ng-repeat="a in advocates | orderBy: 'name'"
+											ng-include="getTemplate(a)" userId={{a.username}}>
+										</tr>
+									</tbody>
+								</table>
+								<script type="text/ng-template" id="view">
+                <td name="nameCell">{{a.username}}</td>
+				<td name="enabledCell">{{enabledText(a)}}</td>
+                <td> 
+                  <div class="row text-center">
+                    <div class="col-md-6">
+                      <input type="button" value="Delete" class="btn btn-danger" name="deleteAdvocate" ng-click="deleteAdvocate(a)"/>                          
+                    </div>
+                  </div>
+                </td>
+                </script>
+								<br>
+								<style>
+form {
+	width: 400px;
+}
+
+.label {
+	float: right;
+	text-align: left;
+	width: 200px;
+	height: 20px;
+	color: #000000
+}
+
+input[type=text] {
+	float: right;
+	text-align: left;
+	width: 200px;
+	height: 20px
+}
+
+input[type=password] {
+	float: right;
+	text-align: left;
+	width: 200px;
+	height: 20px
+}
+
+.clear {
+	clear: both;
+	height: 0;
+	line-height: 0;
+}
+
+.floatright {
+	float: right;
+}
+</style>
+								<div>
+									<p style="color: red" ng-model="errorMessage" id="errormsg">{{errorMessage}}</p>
+								</div>
+								<div>
+									<p style="color: green" ng-model="successMessage" id="successmsg">{{successMessage}}</p>
+								</div>
+
+
+								
+
+
+								<!-- Row for Add Advocate Interface -->
+								<div class="row">
+									<div class="col-md-12">
+										<div class="panel panel-default">
+											<!-- Panel heading for Update Advocate Interface -->
+											<div class="panel-heading ">Update an Advocate</div>
+											<!-- Panel body for Update Advocate Interface -->
+											<div class="panel-body">
+												<!-- Table holding Update Advocate Interface -->
+												<table>
+													<tr>
+														<!-- Select Droplist for Advocate to Edit -->
+														<select ng-model="selectedAdvocate"
+																ng-options="item.username for item in advocates" required="true" ng-change="selectAdvocate(selectedAdvocate)">
+															<option value="">Select an Advocate to update</option>
+														</select>
+														<!-- unsure of whether or not this will work, or if it should all go inside of the table -->
+														<td style="color: red;" ng-show="errEdit[0]">{{errEdit[0]}}</td>
+													</tr>
+													<tr>
+														<td style="text-align: left; padding: 5px"><b>Password:</b></td>
+														<td><input type="password" name="passwordEdit" id="passwordEdit"
+
+															value="{{advocateFormEdit.password}}"
+															ng-model="advocateFormEdit.password" /></td>
+
+														<td style="color: red;" ng-show="errEdit[1]">{{errEdit[1]}}</td>
+													</tr>
+													<tr>
+														<td style="text-align: left; padding: 5px"><b>Password (again):</b></td>
+														<td><input type="password" name="password2Edit" id="password2Edit"
+
+															value="{{advocateFormEdit.password2}}"
+															ng-model="advocateFormEdit.password2" /></td>
+
+														<td style="color: red;" ng-show="errEdit[2]">{{errEdit[2]}}</td>
+													</tr>
+													<tr>
+														<td style="text-align: left; padding: 5px"><b>First Name:</b></td>
+														<td><input type="text" name="firstNameEdit" id="firstNameEdit"
+
+															value="{{advocateFormEdit.firstName}}"
+															ng-model="advocateFormEdit.firstName" /></td>
+
+														<td style="color: red;" ng-show="errEdit[3]">{{errEdit[3]}}</td>
+													</tr>
+													<tr>
+														<td style="text-align: left; padding: 5px"><b>Middle Name:</b></td>
+														<td><input type="text" name="middleNameEdit" id="middleNameEdit"
+
+															value="{{advocateFormEdit.middleName}}"
+															ng-model="advocateFormEdit.middleName" /></td>
+
+														<td style="color: red;" ng-show="errEdit[4]">{{errEdit[4]}}</td>
+													</tr>
+													<tr>
+														<td style="text-align: left; padding: 5px"><b>Last Name:</b></td>
+														<td><input type="text" name="lastNameEdit" id="lastNameEdit"
+
+															ng-model="advocateFormEdit.lastName" /></td>
+
+														<td style="color: red;" ng-show="errEdit[5]">{{errEdit[5]}}</td>
+													</tr>
+													<tr>
+														<td style="text-align: left; padding: 5px"><b>Nickname:</b></td>
+														<td><input type="text" name="nicknameEdit" id="nicknameEdit"
+
+															ng-model="advocateFormEdit.nickname" /></td>
+
+														<td style="color: red;" ng-show="errEdit[6]">{{errEdit[6]}}</td>
+													</tr>
+													<tr>
+														<td style="text-align: left; padding: 5px"><b>Email:</b></td>
+														<td><input type="text" name="emailEdit" id="emailEdit"
+
+															ng-model="advocateFormEdit.email" /></td>
+
+														<td style="color: red;" ng-show="errEdit[7]">{{errEdit[7]}}</td>
+													</tr>
+													<tr>
+														<td style="text-align: left; padding: 5px"><b>Address
+																Line 1:</b></td>
+														<td><input type="text" name="address1Edit" id="address1Edit"
+
+															value="{{advocateFormEdit.address1}}"
+															ng-model="advocateFormEdit.address1" /></td>
+
+														<td style="color: red;" ng-show="errEdit[8]">{{errEdit[8]}}</td>
+													</tr>
+													<tr>
+														<td style="text-align: left; padding: 5px"><b>Address
+																Line 2:</b></td>
+														<td><input type="text" name="address2Edit" id="address2Edit"
+
+															ng-model="advocateFormEdit.address2" /></td>
+
+														<td style="color: red;" ng-show="errEdit[9]">{{errEdit[9]}}</td>
+													</tr>
+													<tr>
+														<td style="text-align: left; padding: 5px"><b>City:</b></td>
+														<td><input type="text" name="cityEdit" id="cityEdit"
+
+															ng-model="advocateFormEdit.city" /></td>
+
+														<td style="color: red;" ng-show="errEdit[10]">{{errEdit[10]}}</td>
+													</tr>
+													<tr>
+														<td style="text-align: left; padding: 5px"><b>State:</b></td>
+														<td><select name="stateEdit" id="stateEdit"
+
+															ng-model="advocateFormEdit.state">
+
+																<option ng-repeat="st in states">{{st.id}}</option>
+														</select></td>
+													</tr>
+													<tr>
+														<td style="text-align: left; padding: 5px"><b>Zip:</b></td>
+														<td><input type="text" name="zipEdit" id="zipEdit"
+
+															ng-model="advocateFormEdit.zip" /></td>
+
+														<td style="color: red;" ng-show="errEdit[11]">{{errEdit[11]}}</td>
+													</tr>
+													<tr>
+														<td style="text-align: left; padding: 5px"><b>Phone:</b></td>
+														<td><input type="text" name="phoneEdit" id="phoneEdit"
+
+															value="advocateFormEdit.phone" placeholder="xxx-xxx-xxxx"
+															ng-model="advocateFormEdit.phone" /></td>
+
+														<td style="color: red;" ng-show="errEdit[12]">{{errEdit[12]}}</td>
+													</tr>
+													<tr>
+														<td style="text-align: left; padding: 5px"><b>Enabled?:</b></td>
+
+														<td><input type="checkbox" name="enabledEdit" class="checkbox" 
+															ng-model="editEnabled"/>
+
+														
+													</tr>
+												</table>
+								
+												<br />
+												<div class="panel-body">
+													<div class="flex-container">
+														<!--  Button to submit the edit form for an advocate and a refresh button to reset the state of the panel -->
+														<div style="text-align: right">
+															<button ng-click="updateAdvocate()" class="btn" name="updateAdvocate" 
+																ng-disabled="!isAdvocateSelected"
+																style="background-color: green; color: white" >Update Advocate</button>
+															<button ng-click="resetEditPanel()" class="btn" name="updateReset" 
+																ng-disabled="!isAdvocateSelected"
+																style="background-color: blue; color: white" >Reset</button>
+														</div>
+														<!--  Success and error messages for editing an advocate -->
+														<div style="text-align: left">
+															<p style="color: green" ng-model="successEdit" id="successEdit">{{successEdit}}</p>
+															<p style="color: red" ng-model="errorEdit" id="errorEdit">{{errorEdit}}</p>
+														</div>
+														
+													</div>
+												</div>
+												
+											</div>
+										</div>
+									</div>
+								</div>
+								
+								<!-- Row for Add Advocate Interface -->
+								<div class="row">
+									<div class="col-md-12">
+										<div class="panel panel-default">
+											<!-- Panel heading for Add Advocate Interface -->
+											<div class="panel-heading ">Add an Advocate</div>
+											<!-- Panel body for Add Advocate Interface -->
+											<div class="panel-body">
+												<!-- Table holding Add Advocate Interface -->
+												<table>
+													<tr>
+														<td style="text-align: left; padding: 5px"><b>Username:</b></td>
+
+														<td><input type="text" name="usernameAdd" id="usernameAdd"
+															value="{{advocateFormAdd.username}}"
+															ng-model="advocateFormAdd.username" /></td>
+
+														<td style="color: red;" ng-show="errAdd[0]">{{errAdd[0]}}</td>
+													</tr>
+													<tr>
+														<td style="text-align: left; padding: 5px"><b>Password:</b></td>
+														<td><input type="password" name="passwordAdd" id="passwordAdd"
+
+															value="{{advocateFormAdd.password}}"
+															ng-model="advocateFormAdd.password" /></td>
+
+														<td style="color: red;" ng-show="errAdd[1]">{{errAdd[1]}}</td>
+													</tr>
+													<tr>
+														<td style="text-align: left; padding: 5px"><b>Password (again):</b></td>
+														<td><input type="password" name="password2Add" id="password2Add"
+
+															value="{{advocateFormAdd.password2}}"
+															ng-model="advocateFormAdd.password2" /></td>
+
+														<td style="color: red;" ng-show="errAdd[2]">{{errAdd[2]}}</td>
+													</tr>
+													<tr>
+														<td style="text-align: left; padding: 5px"><b>First Name:</b></td>
+														<td><input type="text" name="firstNameAdd" id="firstNameAdd"
+
+															value="{{advocateFormAdd.firstName}}"
+															ng-model="advocateFormAdd.firstName" /></td>
+
+														<td style="color: red;" ng-show="errAdd[3]">{{errAdd[3]}}</td>
+													</tr>
+													<tr>
+														<td style="text-align: left; padding: 5px"><b>Middle Name:</b></td>
+														<td><input type="text" name="middleNameAdd" id="middleNameAdd"
+
+															value="{{advocateFormAdd.middleName}}"
+															ng-model="advocateFormAdd.middleName" /></td>
+
+														<td style="color: red;" ng-show="errAdd[4]">{{errAdd[4]}}</td>
+													</tr>
+													<tr>
+														<td style="text-align: left; padding: 5px"><b>Last Name:</b></td>
+														<td><input type="text" name="lastNameAdd" id="lastNameAdd"
+
+															ng-model="advocateFormAdd.lastName" /></td>
+
+														<td style="color: red;" ng-show="errAdd[5]">{{errAdd[5]}}</td>
+													</tr>
+													<tr>
+														<td style="text-align: left; padding: 5px"><b>Nickname:</b></td>
+														<td><input type="text" name="nicknameAdd" id="nicknameAdd"
+
+															ng-model="advocateFormAdd.nickname" /></td>
+
+														<td style="color: red;" ng-show="errAdd[6]">{{errAdd[6]}}</td>
+													</tr>
+													<tr>
+														<td style="text-align: left; padding: 5px"><b>Email:</b></td>
+														<td><input type="text" name="emailAdd" id="emailAdd"
+
+															ng-model="advocateFormAdd.email" /></td>
+
+														<td style="color: red;" ng-show="errAdd[7]">{{errAdd[7]}}</td>
+													</tr>
+													<tr>
+														<td style="text-align: left; padding: 5px"><b>Address
+																Line 1:</b></td>
+														<td><input type="text" name="address1Add" id="address1Add"
+
+															value="{{advocateFormAdd.address1}}"
+															ng-model="advocateFormAdd.address1" /></td>
+
+														<td style="color: red;" ng-show="errAdd[8]">{{errAdd[8]}}</td>
+													</tr>
+													<tr>
+														<td style="text-align: left; padding: 5px"><b>Address
+																Line 2:</b></td>
+														<td><input type="text" name="address2Add" id="address2Add"
+
+															ng-model="advocateFormAdd.address2" /></td>
+
+														<td style="color: red;" ng-show="errAdd[9]">{{errAdd[9]}}</td>
+													</tr>
+													<tr>
+														<td style="text-align: left; padding: 5px"><b>City:</b></td>
+														<td><input type="text" name="cityAdd" id="cityAdd"
+
+															ng-model="advocateFormAdd.city" /></td>
+
+														<td style="color: red;" ng-show="errAdd[10]">{{errAdd[10]}}</td>
+													</tr>
+													<tr>
+														<td style="text-align: left; padding: 5px"><b>State:</b></td>
+														<td><select name="stateAdd" id="stateAdd"
+
+															ng-model="advocateFormAdd.state">
+
+																<option ng-repeat="st in states">{{st.id}}</option>
+														</select></td>
+													</tr>
+													<tr>
+														<td style="text-align: left; padding: 5px"><b>Zip:</b></td>
+														<td><input type="text" name="zipAdd" id="zipAdd"
+
+															ng-model="advocateFormAdd.zip" /></td>
+
+														<td style="color: red;" ng-show="errAdd[11]">{{errAdd[11]}}</td>
+													</tr>
+													<tr>
+														<td style="text-align: left; padding: 5px"><b>Phone:</b></td>
+														<td><input type="text" name="phoneAdd" id="phoneAdd"
+
+															value="advocateFormAdd.phone" placeholder="xxx-xxx-xxxx"
+															ng-model="advocateFormAdd.phone" /></td>
+
+														<td style="color: red;" ng-show="errAdd[12]">{{errAdd[12]}}</td>
+													</tr>
+													<tr>
+														<td style="text-align: left; padding: 5px"><b>Enabled?:</b></td>
+
+														<td><input type="checkbox" name="enabledAdd" class="checkbox"
+															ng-model="addEnabled" />
+
+														
+													</tr>
+												</table>
+								
+												<br />
+
+												<div class="panel-body">
+													<div class="flex-container">
+														<!--  Button to submit the add form for an advocate -->
+														<div style="text-align: right">
+															<button ng-click="createAdvocate()" class="btn" name="createAdvocate"
+															style="background-color: green; color: white" >Add Advocate</button>
+															<button ng-click="resetAddPanel()" class="btn" name="addReset"
+															style="background-color: blue; color: white" >Reset</button>
+														</div>
+														<!--  Success and error messages for adding an advocate -->
+														<div style="text-align: left">
+															<p style="color: green" ng-model="successAdd" id="successAdd">{{successAdd}}</p>
+															<p style="color: red" ng-model="errorAdd" id="errorAdd">{{errorAdd}}</p>
+														</div>
+														
+													</div>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+								
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</body>
+</html>

@@ -1,0 +1,116 @@
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:include="layout :: head(title=~{::title},links=~{})">
+<title>Error</title>
+</head>
+<style type="text/css">
+	.errormessage {
+		font-size: 80px;
+		text-align:center;
+		font-weight: bold;
+	}
+	
+	.gif {
+		font-size: 80px;
+		text-align:center;
+	}
+	.message {
+		text-align: center;
+		font-size: large;
+	}
+	html, body {
+	height: 100%;
+	/* The html and body elements cannot have any padding or margin. */
+}
+
+/* Wrapper for page content to push down footer */
+#wrap {
+	min-height: 100%;
+	height: auto !important;
+	height: 100%;
+	/* Negative indent footer by it's height */
+	margin: 0 auto -60px;
+}
+
+/* Set the fixed height of the footer here */
+#push, #footer {
+	height: 60px;
+}
+
+#footer {
+	background-color: #f5f5f5;
+}
+
+/* Lastly, apply responsive CSS fixes as necessary */
+@media ( max-width : 767px) {
+	#footer {
+		margin-left: -20px;
+		margin-right: -20px;
+		padding-left: 20px;
+		padding-right: 20px;
+	}
+}
+
+
+.container {
+	width: auto;
+	/* max-width: 680px; */
+}
+
+.container .credit {
+	margin: 20px 0;
+	text-align: center;
+}
+
+a {
+	color: #337ab7;
+}
+
+.navbar-form {
+	margin-left: 1em;
+}
+.home { 
+	font-size: 30px;
+	font-weight: bold;
+	text-align: center;
+}
+</style>
+<body>
+<div id="wrap">
+
+		<!-- Navbar -->
+		<nav class="navbar navbar-inverse" style="margin: 0">
+			<div id="navbar-parent" class="container-fluid">
+				<div class="navbar-header">
+					<a class="navbar-brand" th:href="@{/}" id="homePage">iTrust2</a>
+				</div>
+			</div>
+		</nav>
+	<div class="container">
+		<div class="row">
+			<div class="col-md-12">
+				<br><br>
+				<h1 class="errormessage">Oops!</h1>
+				<p class="message">Sorry, the page you're looking for cannot be found! Please return to the home page and try again.</p>
+				<br><br>
+				<div class="home">
+					<a class="home" href="http://localhost:8080/iTrust2">
+						<span class="glyphicon glyphicon-home"></span>
+							Home
+					</a>
+				</div>
+				<br>
+				<div class="gif"><img src="https://cdn.dribbble.com/users/722246/screenshots/3066818/media/0f1c45dcf80e887f41b3c0080660fd37.gif" alt="this slowpoke moves"  width="250" /></div>
+			</div>
+						
+		</div>
+	</div>
+</div>
+<br>
+<div id="footer">
+	<div class="container">
+		<p class="muted credit">iTrust2-v8</p>
+	</div>
+</div>
+</body>
+</html>
